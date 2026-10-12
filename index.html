@@ -102,6 +102,8 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .demo-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .demo-q { font-family: var(--f-display); font-weight: 700; font-size: 1.45rem; line-height: 1.2; letter-spacing: -0.02em; }
 .demo-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+.demo-opts.four { grid-template-columns: repeat(2, 1fr); }
+.demo-opts.four .demo-opt { font-size: 1rem; padding: 14px 8px; }
 .demo-opt { padding: 16px 0; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); font-family: var(--f-mono); font-size: 1.3rem; font-weight: 700; cursor: pointer; transition: border-color .2s, background .2s; }
 .demo-opt:hover:not(:disabled) { border-color: var(--accent); }
 .demo-opt.right { background: var(--win-soft); border-color: var(--win); color: var(--win); }
@@ -3086,16 +3088,47 @@ const DEMOS = [
   {tag: 'Logic trap', q: 'A farmer has 17 sheep. All but 9 run away. How many are left?', o: ['8', '9', '17'], a: 1, hint: 'Your brain wants to subtract.', why: '"All but 9" means 9 stayed.'},
 ];
 let demoIdx = -1;
+// Warm-up: work through the curated traps in a shuffled order with no repeats,
+// mixing in fresh questions from the big bank; once the curated set is used up, it's all bank.
+function demoFromBank() {
+  const short = o => o.every(v => String(v).length <= 22);
+  for (let n = 0; n < 40; n++) {
+    let q;
+    if (Math.random() < 0.6) {
+      const pool = G.filter(g => g.t !== 'code' && g.d <= 2);
+      q = buildGen(pool[Math.floor(Math.random() * pool.length)], Math.random);
+    } else {
+      const pool = Q.filter(x => x.t !== 'code' && (x.d || 1) <= 2 && !x.code);
+      q = pool[Math.floor(Math.random() * pool.length)];
+    }
+    if (!q || q.code || !short(q.o) || q.q.length > 170) continue;
+    q = prepare(q, Math.random);
+    const tr = (TRACKS.find(t => t.id === q.t) || {}).name || q.cat;
+    return {tag: q.trap != null ? 'Trap' : q.cat, q: q.q.replace(/<[^>]+>/g, ''), o: q.o.map(String), a: q.a,
+      hint: `From the ${tr} arena. Go with your gut, or check it?`, why: (q.why || '').replace(/<[^>]+>/g, '')};
+  }
+  return null;
+}
 function showDemo() {
-  let last = -1; try { last = +(localStorage.getItem('yd_demo') ?? -1); } catch (e) {}
-  let i; do { i = Math.floor(Math.random() * DEMOS.length); } while ((i === last || i === demoIdx) && DEMOS.length > 2);
-  demoIdx = i; try { localStorage.setItem('yd_demo', String(i)); } catch (e) {}
-  const d = DEMOS[i];
+  let deck = [], seen = 0;
+  try { deck = JSON.parse(localStorage.getItem('yd_demo_deck') || '[]'); seen = +(localStorage.getItem('yd_demo_seen') || 0); } catch (e) {}
+  if (!Array.isArray(deck)) deck = [];
+  let d = null, i = -1;
+  // First visit always shows a curated trap; after that, every other warm-up comes from the bank.
+  const useBank = !deck.length && seen >= DEMOS.length || (seen > 0 && seen % 2 === 1);
+  if (useBank) d = demoFromBank();
+  if (!d) {
+    if (!deck.length) { deck = DEMOS.map((_, j) => j); for (let j = deck.length - 1; j > 0; j--) { const k = Math.floor(Math.random() * (j + 1)); [deck[j], deck[k]] = [deck[k], deck[j]]; } if (deck[0] === demoIdx) deck.push(deck.shift()); }
+    i = deck.shift(); d = DEMOS[i];
+  }
+  demoIdx = i; seen++;
+  try { localStorage.setItem('yd_demo_deck', JSON.stringify(deck)); localStorage.setItem('yd_demo_seen', String(seen)); } catch (e) {}
   $('#demo-tag').textContent = d.tag;
   $('#demo-q').textContent = d.q;
   $('#demo-out').textContent = 'Pick one. ' + d.hint;
   $('#demo-next').hidden = true;
   const box = $('#demo-opts');
+  box.classList.toggle('four', d.o.length > 3);
   box.innerHTML = d.o.map((o, j) => `<button class="demo-opt" data-j="${j}">${esc(o)}</button>`).join('');
   box.querySelectorAll('.demo-opt').forEach(b => b.onclick = () => {
     const j = +b.dataset.j, ok = j === d.a;
