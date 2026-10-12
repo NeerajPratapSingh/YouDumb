@@ -238,11 +238,10 @@ section { padding-block: 48px; }
 @media (max-width: 600px) { .lessons { grid-template-columns: 1fr; } }
 
 /* Arenas */
-.arenas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.arenas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .arena { text-align: left; cursor: pointer; padding: 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); transition: border-color .15s, background .15s, transform .15s; }
 .arena:hover { border-color: var(--line-2); transform: translateY(-2px); }
 .arena.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
-.arena.wide { grid-column: span 2; }
 .arena-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .arena-name { font-family: var(--f-display); font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; line-height: 1.1; }
 .arena-sel { font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
@@ -253,7 +252,7 @@ section { padding-block: 48px; }
 .arena-bar > div { height: 100%; background: var(--accent); }
 .arena-meta { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 0.68rem; color: var(--muted); }
 .arena-meta b { color: var(--gold); font-weight: 700; }
-@media (max-width: 900px) { .arenas { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .arenas { grid-template-columns: repeat(2, 1fr); } .arena.wide { grid-column: span 2; } }
 
 /* Save / restore + misc */
 .save-sec { padding-block: 24px; }
@@ -387,7 +386,7 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
     <div>
       <div class="eyebrow">60 years of AI · 30 levels · 1 brain</div>
       <h1>AI got smarter every year.<br><em>Did you?</em></h1>
-      <p class="lede">Pick your arena: logic, math, aptitude, business, street smarts or code. Start against a chatbot from 1966 and climb until you face today's best models. Every question teaches you a trick you keep.</p>
+      <p class="lede">Pick your arena: logic, math, aptitude, words, data, business, street smarts or code. Start against a chatbot from 1966 and climb until you face today's best models. Every question teaches you a trick you keep.</p>
       <div class="ctas">
         <button class="btn btn-primary" id="hero-play">Play level 1</button>
         <a class="btn btn-ghost" href="#daily">Today's daily</a>
@@ -576,6 +575,8 @@ const TRACKS = [
   {id:'apt', name:'Aptitude', short:'Aptitude', who:'Placement-style quant, reasoning and verbal.', forWho:'For students and job seekers', burn:'The placement cell has been notified.'},
   {id:'biz', name:'Business & product', short:'Business', who:'Funnels, metrics, unit economics, prioritization.', forWho:'For PMs, ops and founders', burn:'Your CFO just moved you to "low impact".'},
   {id:'street', name:'Street smarts', short:'Street smarts', who:'Money, scams, deals and stats in the news.', forWho:'For literally anyone', burn:'Please do not click any links in your inbox today.'},
+  {id:'words', name:'Words & language', short:'Words', who:'Vocabulary, spelling, idioms and grammar traps.', forWho:'For readers and writers', burn:'Autocorrect is embarrassed for you.'},
+  {id:'data', name:'Data & stats', short:'Data', who:'Averages, percentages, chance and reading numbers.', forWho:'For analysts and the curious', burn:'Your spreadsheet just filed for divorce.'},
   {id:'code', name:'Coding', short:'Coding', who:'JavaScript, Python, SQL, Git and Big-O.', forWho:'For devs and CS students', burn:'Copilot stopped autocompleting for you out of pity.'},
 ];
 const TRACK_IDS = {
@@ -1189,6 +1190,1148 @@ gen('syllogism', 'logic', 2, 'Logic', 'syllogism', r => {
     why: 'Everything in C is inside B, and nothing in B is A.', how: [`All ${C} sit inside ${B}.`, `${A} and ${B} don't overlap at all.`, `So no ${C} can be ${A}.`]};
 });
 
+// ───────────────── Big question pool ─────────────────
+// fam(): one template family, registered once per story context. Each context counts as its own format.
+function fam(id, t, d, cat, k, ctxs, fn) {
+  const list = ctxs && ctxs.length ? ctxs : [null];
+  list.forEach((c, i) => G.push({id: list.length > 1 ? id + '#' + i : id, fam: id, t, d, cat, k, fn: r => fn(r, c)}));
+}
+// addStatic(): hand-written questions given as {q, a: 'right answer', w: ['wrong', ...], trap?: 'wrong one that is the trap', why, how}
+let STATIC_N = 0;
+function addStatic(prefix, t, d, cat, k, items) {
+  items.forEach(it => {
+    const o = [it.a].concat(it.w.slice(0, 3));
+    Q.push({id: prefix + '-' + (++STATIC_N), t, d: it.d || d, cat: it.cat || cat, k: it.k || k, q: it.q, code: it.code,
+      o, a: 0, trap: it.trap ? o.indexOf(it.trap) : (it.w.length ? 1 : undefined), why: it.why, how: it.how || [it.why]});
+  });
+}
+const NAMES = ['Asha', 'Ben', 'Carlos', 'Dina', 'Eli', 'Fatima', 'Gus', 'Hana', 'Ivan', 'Jia', 'Kofi', 'Lena', 'Maya', 'Nate', 'Omar', 'Priya', 'Quinn', 'Ravi', 'Sara', 'Tom', 'Uma', 'Vik', 'Wen', 'Yara', 'Zane'];
+function pkN(r, arr, n) { const s = arr.slice(), o = []; while (o.length < n && s.length) o.push(s.splice(Math.floor(r() * s.length), 1)[0]); return o; }
+const gcdN = (a, b) => b ? gcdN(b, a % b) : Math.abs(a);
+const lcmN = (a, b) => a / gcdN(a, b) * b;
+const frac = (n, d) => { const g = gcdN(n, d); return (n / g) + '/' + (d / g); };
+const pct1 = x => fmt(Math.round(x * 10) / 10) + '%';
+const m2 = n => '$' + Number(n).toFixed(2);
+const cap = s => s[0].toUpperCase() + s.slice(1);
+
+// Tricks for the new question families (shown on reveal, in takeaways and in the playbook)
+Object.assign(CONCEPTS, {
+  'fence-posts': ['Count the gaps', 'Posts = gaps + 1 on a straight line. Cuts = pieces − 1. Pills = intervals + 1.'],
+  'ordering': ['Line them up', 'Write people in order as you read each clue, then read off the answer.'],
+  'pigeonhole': ['Worst case first', 'To guarantee something, imagine the unluckiest draws, then add one.'],
+  'weighing': ['Split into three', 'A balance has three outcomes, so each weighing can cut the suspects to a third.'],
+  'reverse-pct': ['Work back from the result', 'If 80% is $80, then 100% is $100. Divide by the factor; don\'t add the percent back.'],
+  'units': ['Convert first', 'Turn everything into the same unit before you calculate.'],
+  'order-ops': ['Order of operations', 'Brackets first, then multiply and divide, then add and subtract, left to right.'],
+  'lcm': ['Find the common multiple', 'Things that repeat every A and B line up again at their least common multiple.'],
+  'divisibility': ['Digit-sum trick', 'A number\'s remainder by 9 (or 3) equals its digit sum\'s remainder.'],
+  'percent-change': ['Percent change', 'Change ÷ where you started. Never divide by the new value.'],
+  'pct-points': ['Points vs percent', 'From 4% to 5% is +1 percentage point but +25% relative.'],
+  'probability-basics': ['Favourable over total', 'Probability = ways it can happen ÷ all equally likely ways.'],
+  'area': ['Scale squares', 'Double every length and area grows 4×, volume 8×.'],
+  'binary': ['Powers of two', 'Each binary place doubles: 1, 2, 4, 8, 16… Add the places that hold a 1.'],
+  'mixtures': ['Weighted mix', 'Mixing two groups: total of (amount × strength) ÷ total amount.'],
+  'profit-loss': ['Profit on cost', 'Profit % and loss % are measured on the cost price.'],
+  'directions': ['Draw it', 'Sketch the moves. Right-angle paths often make a 3-4-5 triangle.'],
+  'cac': ['Cost per customer', 'CAC = what you spent ÷ customers you got. ROAS = revenue ÷ ad spend.'],
+  'break-even': ['Break-even', 'Units to break even = fixed costs ÷ (price − variable cost per unit).'],
+  'markup': ['Markup vs margin', 'Markup divides profit by cost. Margin divides profit by price.'],
+  'ctr': ['Rates need a base', 'Click rate = clicks ÷ impressions. Always ask: out of what?'],
+  'mrr': ['Recurring revenue', 'MRR = customers × monthly price. ARR = MRR × 12.'],
+  'runway': ['Runway', 'Months left = cash ÷ monthly burn.'],
+  'lift': ['Relative lift', '2% → 3% is a 1-point rise but a 50% relative lift.'],
+  'deals': ['Real discount', 'Buy 2 get 1 free = pay for 2 of 3 items = 33% off each, not 50%.'],
+  'inflation': ['Inflation', 'When prices double, your cash buys half as much. Use the rule of 72.'],
+  'ev': ['Expected value', 'Multiply each outcome by its chance, add them up, then subtract the cost.'],
+  'sampling': ['Scale the sample', 'Sample rate × population, but only if the sample was random.'],
+  'falsy': ['Truthy and falsy', 'JS falsy: false, 0, -0, "", null, undefined, NaN. Python: None, False, 0, empty containers.'],
+  'equality': ['== vs ===', '== converts types before comparing; === checks type and value. Prefer ===.'],
+  'slicing': ['Slices stop early', 'a[i:j] starts at i and stops before j. Negative indexes count from the end.'],
+  'array-methods': ['Array methods', 'map transforms, filter keeps, reduce combines. push returns the new length.'],
+  'modulo': ['Remainders with negatives', 'Python\'s % follows the divisor\'s sign; JavaScript\'s follows the left number.'],
+  'bitwise': ['Bitwise operators', '& keeps bits set in both, | in either, ^ in exactly one. << n multiplies by 2ⁿ.'],
+  'recursion': ['Trace recursion', 'Work up from the base case, writing each call\'s value.'],
+  'trace': ['Trace by hand', 'Track every variable line by line on paper.'],
+  'typeof': ['typeof results', 'typeof [] and typeof null are "object"; typeof NaN is "number".'],
+  'synonyms': ['Same meaning', 'Drop each option into a sentence; a synonym fits the same slot.'],
+  'antonyms': ['Opposites', 'Find the word that flips the meaning, not one that just differs.'],
+  'spelling': ['Spell by syllable', 'Say it slowly in parts and watch the doubled letters.'],
+  'confusables': ['Common mix-ups', 'Expand it: it\'s = it is, they\'re = they are, who\'s = who is.'],
+  'agreement': ['Agreement', 'Match the verb to its real subject. With either/or and neither/nor, match the nearer one.'],
+  'idioms': ['Idioms', 'An idiom\'s meaning isn\'t the sum of its words. Learn the phrase as one unit.'],
+  'plurals': ['Irregular plurals', 'Old and borrowed words keep their own plurals: mouse → mice, crisis → crises.'],
+  'word-count': ['Count carefully', 'Point at each letter as you count. Doubles are where people slip.'],
+  'compounds': ['Shared word', 'Try each option in front of every given word.'],
+  'alpha-order': ['Alphabetical order', 'Compare letter by letter. A word that is the start of another comes first.'],
+  'one-word': ['Roots unlock words', 'biblio = book, phil = love, omni = all, anti = against.'],
+  'palindrome': ['Palindromes', 'Read it backwards letter by letter.'],
+  'anagram': ['Anagrams', 'Sort both words\' letters alphabetically; anagrams match exactly.'],
+  'mean-median': ['Mean vs median', 'Mean adds and divides; median is the middle once sorted. Outliers drag the mean, not the median.'],
+  'weighted-avg': ['Weighted average', 'Combine groups by total ÷ total count, not by averaging the averages.'],
+  'share': ['Share of total', 'Part ÷ total. Add everything up first.'],
+  'independent': ['Independent events', 'Both happen: multiply. At least one: 1 − (neither).'],
+  'rates-per': ['Compare rates, not counts', 'Divide by population before comparing places of different sizes.'],
+  'percentile': ['Percentiles', 'Percentile = share of people you scored above.'],
+  'zscore': ['Standard scores', 'z = (value − mean) ÷ standard deviation: how many SDs from average.'],
+  'spread': ['Look at the spread', 'Same average can hide very different spreads. Check how far values sit from the middle.'],
+  'moving-avg': ['Moving average', 'Average only the last N points; it smooths day-to-day noise.'],
+});
+
+// ── Logic & puzzles ──
+fam('lg-allbut2', 'logic', 1, 'Logic', 'read-q', [['farmer', 'sheep'], ['zookeeper', 'parrots'], ['shepherd', 'goats'], ['pet shop', 'rabbits'], ['child', 'balloons'], ['fisher', 'fish in a bucket']], (r, [who, thing]) => {
+  const N = ri(r, 14, 40); let K; do { K = ri(r, 3, N - 4); } while (K * 2 === N);
+  const verb = thing.includes('balloon') ? 'float away' : thing.includes('fish') ? 'jump out' : 'escape';
+  return {q: `A ${who} has ${N} ${thing}. All but ${K} ${verb}. How many are left?`, ans: K, trap: N - K, wrong: [N, 0, N + K],
+    why: `"All but ${K}" means every one except ${K} went.`, how: [`"All but ${K} ${verb}" = all of them went except ${K}.`, `So ${K} are left.`, `${N} is there to make you subtract.`]};
+});
+fam('lg-race2', 'logic', 1, 'Logic', 'read-q', ['running race', 'swimming race', 'cycling race', 'car race', 'horse race'], (r, kind) => {
+  const p = ri(r, 2, 9), last = r() < 0.3;
+  if (last) return {q: `In a ${kind}, you overtake the person in last place. What place are you in now?`, ans: 'Impossible', trap: 'Second to last', wrong: ['Last', 'First'],
+    why: 'To overtake the last person you\'d have to be behind them, which means you were already last.', how: ['Overtaking means passing someone from behind.', 'Nobody is behind the person in last place.', 'So it can\'t happen.']};
+  return {q: `In a ${kind}, you overtake the person in ${ORD(p)} place. What place are you in now?`, ans: ORD(p), trap: ORD(p - 1), wrong: [ORD(p + 1), 'Last'],
+    why: 'Overtaking someone puts you exactly where they were.', how: [`They were ${ORD(p)}. You take their spot.`, `You're ${ORD(p)}; they drop to ${ORD(p + 1)}.`]};
+});
+fam('lg-double', 'logic', 2, 'Logic', 'exp-growth', [['Algae', 'doubles in area', 'covers the whole pond'], ['Bacteria in a jar', 'double in number', 'fill the jar'], ['A rumour', 'doubles the people who\'ve heard it', 'reaches the whole town'], ['A savings pot', 'doubles', 'hits its target'], ['Lily pads', 'double in area', 'cover the lake']], (r, [what, verb, full]) => {
+  const D = ri(r, 12, 60), quarter = r() < 0.4, ans = quarter ? D - 2 : D - 1;
+  return {q: `${what} ${verb} every day and ${full} on day ${D}. On which day was it ${quarter ? 'a quarter' : 'half'} way there?`, ans: `Day ${ans}`, trap: `Day ${quarter ? Math.round(D / 4) : Math.round(D / 2)}`,
+    wrong: [`Day ${quarter ? D - 1 : D - 2}`, `Day ${D - 4}`],
+    why: 'It doubles daily, so step back from the end.', how: [`Full on day ${D}.`, `Half one day earlier: day ${D - 1}.`, quarter ? `A quarter one more day back: day ${D - 2}.` : 'Halving the number of days is the trap.']};
+});
+fam('lg-parallel', 'logic', 2, 'Logic', 'rates', [['machines', 'widgets'], ['cats', 'mice', 'catch'], ['printers', 'posters', 'print'], ['bakers', 'cakes', 'bake'], ['robots', 'boxes', 'pack'], ['painters', 'fences', 'paint']], (r, [who, what, verb]) => {
+  const M = ri(r, 3, 9), T = ri(r, 2, 12), N = pk(r, [20, 50, 100, 200, 300]); verb = verb || 'make';
+  return {q: `${M} ${who} ${verb} ${M} ${what} in ${T} minutes. How long do ${N} ${who} take to ${verb} ${N} ${what}?`, ans: `${T} min`, trap: `${N} min`,
+    wrong: [`${T * 2} min`, `${Math.round(N * T / M) === T ? T + 5 : Math.round(N * T / M)} min`],
+    why: 'Find what one does, then scale.', how: [`Each of the ${who} handles 1 in ${T} minutes.`, `${N} of them work at the same time, 1 each.`, `${N} done in ${T} minutes.`]};
+});
+fam('lg-dry', 'logic', 1, 'Logic', 'rates', [['shirts', 'dry in the sun'], ['towels', 'dry on a line'], ['loaves', 'cool on a rack'], ['phones', 'charge on separate chargers']], (r, [thing, verb]) => {
+  const h = ri(r, 1, 4), N = ri(r, 5, 30);
+  return {q: `${cap(thing)} take ${h} hour${h > 1 ? 's' : ''} to ${verb}. How long do ${N} ${thing} take, if there's room for all of them at once?`, ans: `${h} hour${h > 1 ? 's' : ''}`, trap: `${h * N} hours`, wrong: [`${h + N} hours`, `${Math.max(1, Math.round(h * N / 2))} hours`],
+    why: 'They all happen at the same time.', how: ['Nothing waits in a queue: every one runs in parallel.', `So ${N} take the same ${h} hour${h > 1 ? 's' : ''} as one.`]};
+});
+fam('lg-pills', 'logic', 2, 'Logic', 'fence-posts', [['pills', 'take one'], ['vitamins', 'take one'], ['photos', 'post one'], ['reminders', 'send one']], (r, [thing, verb]) => {
+  const N = ri(r, 3, 8), m = pk(r, [15, 20, 30, 60]), ans = (N - 1) * m;
+  const show = x => x % 60 === 0 ? `${x / 60} hour${x === 60 ? '' : 's'}` : `${x} minutes`;
+  return {q: `You have ${N} ${thing}. You ${verb} now and then one every ${m} minutes. How long until they're all gone?`, ans: show(ans), trap: show(N * m), wrong: [show(ans + m * 2), show(Math.max(m, ans - m))],
+    why: 'The first one happens at time zero.', how: [`${N} ${thing} means ${N - 1} gaps between them.`, `${N - 1} × ${m} min = ${ans} min.`, `${N} × ${m} counts one gap too many.`]};
+});
+fam('lg-fence', 'logic', 2, 'Logic', 'fence-posts', [['fence', 'posts'], ['road', 'trees'], ['street', 'lamp posts'], ['track', 'flags']], (r, [line, things]) => {
+  const s = pk(r, [2, 3, 4, 5, 10]), n = ri(r, 4, 20), L = s * n;
+  return {q: `A straight ${line} is ${L} m long with ${things} every ${s} m, including both ends. How many ${things}?`, ans: n + 1, trap: n, wrong: [n - 1, n + 2],
+    why: 'Count the gaps, then add one for the end.', how: [`${L} ÷ ${s} = ${n} gaps.`, `${cap(things)} sit at both ends of every gap: ${n} + 1 = ${n + 1}.`]};
+});
+fam('lg-cuts', 'logic', 2, 'Logic', 'fence-posts', [['log', 'pieces'], ['ribbon', 'pieces'], ['pipe', 'sections'], ['cake', 'slices in a row']], (r, [thing, part]) => {
+  const N = ri(r, 3, 12), t = ri(r, 2, 9), ans = (N - 1) * t;
+  return {q: `Cutting a ${thing} takes ${t} minutes per cut. How long to cut it into ${N} ${part}?`, ans: `${ans} min`, trap: `${N * t} min`, wrong: [`${(N + 1) * t} min`, `${ans - t > 0 ? ans - t : ans + 2 * t} min`],
+    why: 'N pieces need N − 1 cuts.', how: [`${N} ${part} need ${N - 1} cuts.`, `${N - 1} × ${t} = ${ans} minutes.`]};
+});
+fam('lg-floors', 'logic', 2, 'Logic', 'fence-posts', ['walk', 'climb', 'run'], (r, verb) => {
+  const t = ri(r, 1, 3), F = ri(r, 4, 9), ans = (F - 1) * t;
+  return {q: `It takes ${2 * t} minutes to ${verb} from the 1st floor to the 3rd. At that pace, how long from the 1st to the ${ORD(F)}?`, ans: `${ans} min`, trap: `${Math.round(F / 3 * 2 * t)} min`, wrong: [`${F * t} min`, `${ans + 2 * t} min`],
+    why: 'Count the flights between floors, not the floors.', how: [`1st → 3rd is 2 flights, so ${t} min per flight.`, `1st → ${ORD(F)} is ${F - 1} flights.`, `${F - 1} × ${t} = ${ans} min.`]};
+});
+fam('lg-snail', 'logic', 3, 'Logic', 'fence-posts', ['well', 'wall', 'pole'], (r, place) => {
+  let U, D, H; do { U = ri(r, 3, 6); D = ri(r, 1, U - 1); H = ri(r, 10, 30); } while (H <= U);
+  const days = Math.ceil((H - U) / (U - D)) + 1, naive = Math.ceil(H / (U - D));
+  if (days === naive) return null;
+  return {q: `A snail climbs ${U} m up a ${H} m ${place} each day and slips back ${D} m each night. On which day does it reach the top?`, ans: `Day ${days}`, trap: `Day ${naive}`, wrong: [`Day ${days + 1}`, `Day ${days - 1}`],
+    why: 'On the last day it reaches the top before it can slip.', how: [`Net progress per full day: ${U} − ${D} = ${U - D} m.`, `It needs to be within ${U} m of the top: ${H - U} m, which takes ${Math.ceil((H - U) / (U - D))} full days.`, `The next day it climbs out: day ${days}.`]};
+});
+fam('lg-siblings', 'logic', 2, 'Logic', 'read-q', null, r => {
+  const name = pk(r, ['Sally', 'Maya', 'Priya', 'Lena', 'Hana', 'Sara']), B = ri(r, 2, 6), S = ri(r, 2, 4);
+  return {q: `${name} has ${B} brothers. Each brother has ${S} sisters. How many sisters does ${name} have?`, ans: S - 1, trap: S, wrong: [S * B, B],
+    why: `${name} is one of the brothers' sisters.`, how: [`The brothers all share the same ${S} sisters.`, `${name} is one of those ${S}.`, `So ${name} has ${S - 1} sister${S - 1 === 1 ? '' : 's'}.`]};
+});
+fam('lg-age-half', 'logic', 2, 'Logic', 'read-q', ['sister', 'brother', 'cousin'], (r, rel) => {
+  const X = pk(r, [4, 6, 8, 10, 12]), Y = ri(r, 25, 80), ans = Y - X / 2;
+  return {q: `When I was ${X}, my ${rel} was half my age. Now I'm ${Y}. How old is my ${rel}?`, ans, trap: Y / 2 === ans ? ans + 1 : Y / 2, wrong: [ans - 2, Y - X],
+    why: 'The age gap never changes.', how: [`At ${X}, my ${rel} was ${X / 2}: a gap of ${X / 2} years.`, `The gap stays ${X / 2} forever.`, `${Y} − ${X / 2} = ${ans}.`]};
+});
+fam('lg-order', 'logic', 2, 'Logic', 'ordering', [['taller than', 'tallest', 'shortest'], ['older than', 'oldest', 'youngest'], ['faster than', 'fastest', 'slowest'], ['richer than', 'richest', 'poorest']], (r, [rel, top, bottom]) => {
+  const n = ri(r, 3, 5), people = pkN(r, NAMES, n); // people[0] is the top of the order
+  const pairs = []; for (let i = 0; i < n - 1; i++) pairs.push(`${people[i]} is ${rel} ${people[i + 1]}`);
+  for (let i = pairs.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pairs[i], pairs[j]] = [pairs[j], pairs[i]]; }
+  const askTop = r() < 0.5, ans = askTop ? people[0] : people[n - 1];
+  return {q: `${pairs.join('. ')}. Who is the ${askTop ? top : bottom}?`, ans, trap: askTop ? people[1] : people[n - 2], wrong: people.filter(p => p !== ans).slice(0, 3),
+    why: 'Chain the clues into one line.', how: ['Write each clue as an arrow and join them into one chain.', `Order: ${people.join(' > ')}.`, `${cap(askTop ? top : bottom)}: ${ans}.`]};
+});
+fam('lg-queue', 'logic', 2, 'Logic', 'fence-posts', [['in a queue', 'from the front', 'from the back'], ['in a row of books', 'from the left', 'from the right'], ['in the class ranking', 'from the top', 'from the bottom'], ['in a line of cars', 'from the front', 'from the back']], (r, [where, a, b]) => {
+  const x = ri(r, 2, 15), y = ri(r, 2, 15), ans = x + y - 1, name = pk(r, NAMES);
+  return {q: `${name} is ${ORD(x)} ${a} and ${ORD(y)} ${b} ${where}. How many in total?`, ans, trap: x + y, wrong: [x + y + 1, Math.max(x, y)],
+    why: `${name} is counted in both positions.`, how: [`Counting ${a}, ${name} is number ${x}.`, `Counting ${b}, ${name} is number ${y}, so ${name} is counted twice.`, `${x} + ${y} − 1 = ${ans}.`]};
+});
+fam('lg-strike', 'logic', 3, 'Logic', 'fence-posts', ['clock', 'church bell', 'drum'], (r, what) => {
+  const a = ri(r, 3, 6), gap = ri(r, 1, 3), b = ri(r, a + 3, 12), t1 = (a - 1) * gap, ans = (b - 1) * gap;
+  return {q: `A ${what} strikes ${a} times in ${t1} seconds. How long does it take to strike ${b} times?`, ans: `${ans} s`, trap: `${Math.round(t1 / a * b)} s`, wrong: [`${b * gap + gap} s`, `${ans - gap} s`],
+    why: 'Time is spent in the gaps between strikes.', how: [`${a} strikes have ${a - 1} gaps, so each gap is ${t1} ÷ ${a - 1} = ${gap} s.`, `${b} strikes have ${b - 1} gaps.`, `${b - 1} × ${gap} = ${ans} s.`]};
+});
+fam('lg-handshake', 'logic', 2, 'Logic', 'counting', [['people at a party', 'shakes hands with everyone else once', 'handshakes'], ['teams in a league', 'plays every other team once', 'games'], ['friends', 'sends every other friend one message', 'messages if replies don\'t count']], (r, [who, act, unit]) => {
+  const n = ri(r, 4, 20), ans = n * (n - 1) / 2;
+  return {q: `${n} ${who}. Each ${act}. How many ${unit} in total?`, ans, trap: n * (n - 1), wrong: [n * n, n * 2],
+    why: 'Each pair counts once.', how: [`Each of ${n} meets ${n - 1} others: ${n} × ${n - 1} = ${n * (n - 1)}.`, 'That counts every pair twice (A–B and B–A).', `${n * (n - 1)} ÷ 2 = ${ans}.`]};
+});
+fam('lg-dayafter', 'logic', 2, 'Logic', 'calendar', null, r => {
+  const forms = [['the day after tomorrow', 2, 'yesterday', -1], ['the day before yesterday', -2, 'tomorrow', 1], ['tomorrow', 1, 'the day before yesterday', -2], ['yesterday', -1, 'the day after tomorrow', 2]];
+  const [given, gOff, ask, aOff] = pk(r, forms), g = ri(r, 0, 6), today = ((g - gOff) % 7 + 7) % 7, ans = DAYS[((today + aOff) % 7 + 7) % 7];
+  return {q: `If ${given} is ${DAYS[g]}, what day was or will be ${ask}?`, ans, trap: DAYS[((g + aOff) % 7 + 7) % 7] === ans ? DAYS[(today + 3) % 7] : DAYS[((g + aOff) % 7 + 7) % 7],
+    wrong: [DAYS[today], DAYS[(today + 4) % 7]],
+    why: 'Work out today first, then move from there.', how: [`${cap(given)} is ${DAYS[g]}, so today is ${DAYS[today]}.`, `${cap(ask)} is ${Math.abs(aOff)} day${Math.abs(aOff) > 1 ? 's' : ''} ${aOff > 0 ? 'after' : 'before'} today.`, `That's ${ans}.`]};
+});
+fam('lg-weigh', 'logic', 3, 'Logic', 'weighing', [['coins', 'heavier fake'], ['bags of sugar', 'heavier bag'], ['balls', 'heavier ball']], (r, [things, odd]) => {
+  const N = pk(r, [3, 8, 9, 10, 26, 27, 28, 80, 81]); let w = 0, c = 1; while (c < N) { c *= 3; w++; }
+  let w2 = 0, c2 = 1; while (c2 < N) { c2 *= 2; w2++; }
+  return {q: `${N} ${things} look identical, but one is a ${odd}. With a balance scale, what's the fewest weighings that always finds it?`, ans: w, trap: w2 === w ? w + 1 : w2, wrong: [w + 2, Math.max(1, w - 1) === w ? w + 3 : Math.max(1, w - 1)],
+    why: 'Each weighing splits the group into three: left, right and off the scale.', how: ['A weighing has 3 outcomes: left heavy, right heavy, balanced.', `So each weighing cuts the suspects to a third: 3^${w} = ${Math.pow(3, w)} ≥ ${N}.`, `${w} weighings. Halving each time (${w2}) wastes the third pile.`]};
+});
+fam('lg-socks', 'logic', 3, 'Logic', 'pigeonhole', [['socks', 'drawer', 'a matching pair'], ['marbles', 'bag', 'two of the same colour'], ['T-shirts', 'drawer', 'two of the same colour']], (r, [things, box, goal]) => {
+  const R = ri(r, 3, 12), B = ri(r, 3, 12), any = r() < 0.5;
+  if (any) return {q: `A ${box} has ${R} red and ${B} blue ${things}. In the dark, how many must you take to be sure of ${goal}?`, ans: 3, trap: R + B > 3 ? Math.min(R, B) + 1 : 4, wrong: [2, R + 1 === 3 ? R + 2 : R + 1],
+    why: 'Worst case: one of each colour first.', how: ['Unluckiest start: one red, one blue.', 'The third one must match one of them.', 'So 3.']};
+  return {q: `A ${box} has ${R} red and ${B} blue ${things}. In the dark, how many must you take to be sure of two red ones?`, ans: B + 2, trap: 3, wrong: [R + 2, B + 1],
+    why: 'Worst case: you pull every blue first.', how: [`Unluckiest case: all ${B} blue come out first.`, 'Then you need 2 reds.', `${B} + 2 = ${B + 2}.`]};
+});
+fam('lg-syll2', 'logic', 2, 'Logic', 'syllogism', null, r => {
+  const W = ['bloops', 'razzies', 'lazzies', 'zorbs', 'quibs', 'flens', 'drobs', 'wazzles', 'gloms', 'tripes'], [A, B, C] = pkN(r, W, 3), v = ri(r, 0, 3);
+  if (v === 0) return {q: `All ${A} are ${B}. No ${B} are ${C}. Can any ${A} be ${C}?`, ans: 'No', trap: 'Can\'t tell', wrong: ['Yes', 'Only some'], why: `Every ${A} is a ${B}, and no ${B} is a ${C}.`, how: [`${A} sit inside ${B}.`, `${B} and ${C} never overlap.`, `So no ${A} is a ${C}.`]};
+  if (v === 1) return {q: `Some ${A} are ${B}. Some ${B} are ${C}. Are some ${A} definitely ${C}?`, ans: 'Can\'t tell', trap: 'Yes', wrong: ['No', 'All of them'], why: 'The two overlaps might not touch.', how: [`The ${A}–${B} overlap and the ${B}–${C} overlap can sit in different parts of ${B}.`, 'Nothing forces them together.', 'Can\'t tell.']};
+  if (v === 2) return {q: `All ${A} are ${B}. Some ${C} are ${A}. Are some ${C} definitely ${B}?`, ans: 'Yes', trap: 'Can\'t tell', wrong: ['No', 'All of them'], why: `The ${C} that are ${A} are also ${B}.`, how: [`Some ${C} are ${A}.`, `All ${A} are ${B}.`, `So those ${C} are ${B} too. Yes.`]};
+  return {q: `No ${A} are ${B}. Some ${C} are ${A}. Are some ${C} definitely not ${B}?`, ans: 'Yes', trap: 'Can\'t tell', wrong: ['No', 'None of them'], why: `The ${C} that are ${A} can't be ${B}.`, how: [`Some ${C} are ${A}.`, `No ${A} are ${B}.`, `So those ${C} are not ${B}. Yes.`]};
+});
+fam('lg-knights2', 'logic', 4, 'Logic', 'knights', null, r => {
+  const [A, B] = pkN(r, NAMES, 2), v = ri(r, 0, 2);
+  if (v === 0) return {q: `On an island, knights always tell the truth and knaves always lie. ${A} says: "At least one of us is a knave." What are ${A} and ${B}?`, ans: `${A} knight, ${B} knave`, trap: 'Both knaves', wrong: ['Both knights', `${A} knave, ${B} knight`],
+    why: `If ${A} were a knave, the statement would be true, which a knave can't say.`, how: [`Suppose ${A} is a knave: then "at least one is a knave" is true. Knaves can't say true things. Contradiction.`, `So ${A} is a knight, and the statement is true.`, `At least one is a knave, and it isn't ${A}: ${B} is a knave.`]};
+  if (v === 1) return {q: `Knights always tell the truth, knaves always lie. ${A} says: "${B} is a knave." ${B} says: "We are both knights." What are they?`, ans: `${A} knight, ${B} knave`, trap: 'Both knights', wrong: ['Both knaves', `${A} knave, ${B} knight`],
+    why: `${B}'s claim can't be true, so ${B} is lying.`, how: [`If ${B} were a knight, both would be knights, and ${A} (a knight) would be lying about ${B}. Contradiction.`, `So ${B} is a knave, and "we are both knights" is a lie, which fits.`, `${A} said ${B} is a knave. That's true, so ${A} is a knight.`]};
+  return {q: `Knights always tell the truth, knaves always lie. ${A} says: "We are the same kind." ${B} says: "We are different kinds." What is ${B}?`, ans: 'A knight', trap: 'A knave', wrong: ['Can\'t tell', 'Either'],
+    why: 'The two statements contradict each other, so exactly one of them is true.', how: ['"Same kind" and "different kinds" can\'t both be true or both be false: exactly one is true.', 'One true and one false statement means one knight and one knave: different kinds.', `So ${B} told the truth: ${B} is a knight.`]};
+});
+
+addStatic('lg', 'logic', 2, 'Logic', 'lateral', [
+  {q: 'A man pushes his car to a hotel and tells the owner he\'s bankrupt. Why?', a: 'He\'s playing Monopoly', w: ['His car broke down', 'He lost a bet', 'The hotel is a bank'], why: 'In Monopoly you move your car token, land on a hotel and go bankrupt.', how: ['"Car", "hotel" and "bankrupt" together point to a board game.', 'In Monopoly your piece can be a car, and landing on a hotel can bankrupt you.']},
+  {q: 'What has keys but can\'t open locks?', a: 'A piano', w: ['A prison', 'A map', 'A car'], why: 'Piano keys make music, not open doors.', how: ['"Keys" has two meanings.', 'A piano has keys that open nothing.']},
+  {q: 'What gets wetter the more it dries?', a: 'A towel', w: ['A sponge', 'Rain', 'Ice'], why: 'A towel picks up water as it dries you.', how: ['Think about what dries other things.', 'A towel gets wetter as it dries you.']},
+  {q: 'Which weighs more: a kilogram of feathers or a kilogram of steel?', a: 'They weigh the same', w: ['Steel', 'Feathers', 'Depends on gravity'], trap: 'Steel', why: 'A kilogram is a kilogram.', how: ['Both are measured as 1 kg.', 'Same weight; only the volume differs.']},
+  {q: 'How many birthdays does the average person have?', a: 'One', w: ['About 73', 'About 80', 'One a year'], trap: 'About 73', why: 'You\'re born once. The rest are anniversaries of it.', how: ['A birthday is the day you were born.', 'That happens once; the rest are celebrations of it.']},
+  {q: 'A rooster lays an egg on the peak of a sloped roof. Which way does it roll?', a: 'Roosters don\'t lay eggs', w: ['Left', 'Right', 'It stays on top'], why: 'Only hens lay eggs.', how: ['Check the premise before the physics.', 'Roosters are male. No egg.']},
+  {q: 'If there are 3 apples and you take away 2, how many apples do you have?', a: '2', w: ['1', '3', '0'], trap: '1', why: 'You took 2, so you have 2.', how: ['The question asks what you have, not what\'s left.', 'You took 2, so you have 2.']},
+  {q: 'A doctor\'s brother is a lawyer, but the lawyer has no brother. How?', a: 'The doctor is his sister', w: ['They\'re cousins', 'One is adopted', 'It\'s impossible'], trap: 'It\'s impossible', why: 'The doctor is a woman.', how: ['Don\'t assume the doctor is a man.', 'The lawyer has a sister, who is the doctor.']},
+  {q: 'What can you hold in your right hand but never in your left hand?', a: 'Your left hand', w: ['A pen', 'Your right elbow', 'Nothing'], why: 'Your right hand can hold your left hand; your left hand can\'t hold itself.', how: ['Think of things attached to you.', 'Your left hand can\'t hold itself.']},
+  {q: 'Two mothers and two daughters go fishing and catch 3 fish, one each. How many people?', a: '3', w: ['4', '2', '6'], trap: '4', why: 'Grandmother, mother and daughter.', how: ['A mother can also be a daughter.', 'Grandmother, mother, daughter: 2 mothers, 2 daughters, 3 people.']},
+  {q: 'How many animals of each kind did Moses take on the ark?', a: 'None, it was Noah', w: ['Two', 'Seven', 'One'], trap: 'Two', why: 'The ark story is about Noah.', how: ['Read the name in the question.', 'It was Noah\'s ark, not Moses\'s.']},
+  {q: 'A plane takes off with 100 passengers. At the first stop, 20 get off and 10 get on. At the second, 5 get off. How many stops?', a: '2', w: ['85', '3', '1'], trap: '85', why: 'The question is about stops, not passengers.', how: ['Read the actual question at the end.', 'It asks for stops: 2.']},
+  {q: 'You\'re in a dark room with a candle, a wood stove and a gas lamp, and one match. What do you light first?', a: 'The match', w: ['The candle', 'The gas lamp', 'The stove'], trap: 'The candle', why: 'You can\'t light anything else without lighting the match.', how: ['Everything needs a flame first.', 'The match comes before all of them.']},
+  {q: 'What comes once in a minute, twice in a moment, but never in a thousand years?', a: 'The letter M', w: ['A second', 'A heartbeat', 'Noon'], why: 'Count the letter M in each word.', how: ['minute: 1 M. moment: 2 Ms. thousand years: none.']},
+  {q: 'Some months have 31 days, some have 30. How many have 28?', a: 'All 12', w: ['1', '2', '4'], trap: '1', why: 'Every month has at least 28 days.', how: ['The question asks which months have 28 days, not only 28.', 'All 12 reach day 28.']},
+  {q: 'A man lives on the 10th floor. On rainy days he takes the lift all the way up; on dry days he stops at the 7th and walks. Why?', a: 'He can only reach the 7th button without his umbrella', w: ['He likes exercise on sunny days', 'The lift is broken above 7', 'He visits a friend'], why: 'He\'s short and uses his umbrella to press the 10.', how: ['What changes on rainy days? He carries an umbrella.', 'He uses it to reach the higher button.']},
+  {q: 'If you\'re running a race and pass the person in last place, what place are you in?', a: 'That can\'t happen', w: ['Second to last', 'Last', 'First'], trap: 'Second to last', why: 'Nobody is behind the last person to pass them.', how: ['To overtake someone you must be behind them.', 'No one is behind the person in last place.']},
+  {q: 'What has a neck but no head?', a: 'A bottle', w: ['A snake', 'A guitar string', 'A shirt'], why: 'A bottle\'s narrow top is called its neck.', how: ['"Neck" can mean a narrow part of an object.', 'A bottle has a neck and no head.']},
+  {q: 'Forward I\'m heavy, backward I\'m not. What am I?', a: 'Ton', w: ['Rock', 'Weight', 'Load'], why: '"Ton" backwards is "not".', how: ['Spell each option backwards.', 'T-O-N backwards is N-O-T.']},
+  {q: 'A bus driver goes the wrong way down a one-way street and passes 10 police cars. Why isn\'t he stopped?', a: 'He\'s walking', w: ['He\'s police too', 'It\'s night', 'The cars are parked'], why: 'The bus driver isn\'t driving at that moment.', how: ['"Bus driver" is his job, not what he\'s doing.', 'He\'s on foot, which is allowed.']},
+]);
+
+// ── Math ──
+fam('m-discount', 'math', 1, 'Math', 'pct', ['jacket', 'phone', 'pair of sneakers', 'pair of headphones', 'backpack', 'lamp', 'watch'], (r, item) => {
+  const P = pk(r, [40, 60, 80, 120, 150, 200, 250, 360, 480]), X = pk(r, [10, 15, 20, 25, 30, 40, 50]); if ((P * X) % 100) return null;
+  const off = P * X / 100, ans = P - off;
+  return {q: `A ${usd(P)} ${item} is ${X}% off. What's the sale price?`, ans: usd(ans), trap: usd(off), wrong: [usd(P - X), usd(ans - 10)],
+    why: 'Find the discount, then take it off the price.', how: [`${X}% of ${usd(P)} = ${usd(off)}.`, `${usd(P)} − ${usd(off)} = ${usd(ans)}.`, `${usd(off)} is the discount, not the price.`]};
+});
+fam('m-tip', 'math', 1, 'Math', 'pct', [['restaurant bill', 'tip'], ['taxi fare', 'tip'], ['haircut', 'tip'], ['hotel bill', 'service charge'], ['online order', 'sales tax']], (r, [bill, add]) => {
+  const B = pk(r, [20, 40, 50, 60, 80, 120, 150, 200]), T = pk(r, [5, 10, 15, 20, 25]); if ((B * T) % 100) return null;
+  const extra = B * T / 100, ans = B + extra;
+  return {q: `A ${usd(B)} ${bill} plus a ${T}% ${add}. What's the total?`, ans: usd(ans), trap: usd(B + T), wrong: [usd(extra), usd(ans + 5)],
+    why: `Work out the ${add} as a share of the bill, then add it.`, how: [`10% of ${usd(B)} = ${usd(B / 10)}.`, `${T}% = ${usd(extra)}.`, `${usd(B)} + ${usd(extra)} = ${usd(ans)}.`]};
+});
+fam('m-reverse-pct', 'math', 3, 'Math', 'reverse-pct', ['jacket', 'laptop', 'bike', 'sofa', 'concert ticket'], (r, item) => {
+  const X = pk(r, [10, 20, 25, 40, 50]), orig = pk(r, [40, 60, 80, 100, 120, 200, 300]), sale = orig * (100 - X) / 100; if (sale % 1) return null;
+  return {q: `After a ${X}% discount, a ${item} costs ${usd(sale)}. What was the original price?`, ans: usd(orig), trap: usd(sale * (1 + X / 100)), wrong: [usd(sale + X), usd(orig + 10)],
+    why: `${usd(sale)} is ${100 - X}% of the original, so divide by ${(100 - X) / 100}.`, how: [`After ${X}% off you pay ${100 - X}% of the original.`, `Original = ${usd(sale)} ÷ ${(100 - X) / 100} = ${usd(orig)}.`, `Adding ${X}% back to ${usd(sale)} (${usd(sale * (1 + X / 100))}) is the trap: that ${X}% is of a smaller number.`]};
+});
+fam('m-pct-of-pct', 'math', 2, 'Math', 'pct', null, r => {
+  const a = pk(r, [10, 20, 25, 50]), b = pk(r, [10, 20, 40, 50, 80]), N = pk(r, [200, 400, 500, 800, 1000, 2000]), ans = N * a * b / 10000;
+  if (ans % 1) return null;
+  return {q: `What is ${a}% of ${b}% of ${fmt(N)}?`, ans: fmt(ans), trap: fmt(N * (a + b) / 100), wrong: [fmt(N * b / 100), fmt(ans * 10)],
+    why: 'Percentages of percentages multiply.', how: [`${b}% of ${fmt(N)} = ${fmt(N * b / 100)}.`, `${a}% of that = ${fmt(ans)}.`]};
+});
+fam('m-frac-pct', 'math', 2, 'Math', 'pct', null, r => {
+  const [n, d] = pk(r, [[1, 8], [3, 8], [5, 8], [7, 8], [1, 5], [2, 5], [3, 4], [1, 20], [3, 20], [7, 25], [9, 40], [1, 16]]), ans = n / d * 100;
+  return {q: `What is ${n}/${d} as a percentage?`, ans: fmt(ans) + '%', trap: fmt(n / d * 10) + '%', wrong: [fmt(ans + 5) + '%', fmt(d / n > 10 ? ans * 2 : ans + 12.5) + '%'],
+    why: 'Divide the top by the bottom, then × 100.', how: [d === 8 ? `1/8 = 12.5%, so ${n}/8 = ${n} × 12.5%.` : `${n} ÷ ${d} = ${n / d}.`, `= ${fmt(ans)}%.`]};
+});
+fam('m-square5', 'math', 2, 'Math', 'mental-mult', null, r => {
+  const t = ri(r, 2, 9), N = t * 10 + 5, ans = N * N;
+  return {q: `${N}² = ?  (${N} × ${N})`, ans: fmt(ans), trap: fmt(t * t * 100 + 25), wrong: [fmt(ans + 100), fmt(ans - 50)],
+    why: `Numbers ending in 5: multiply the tens digit by the next number up, then add 25.`, how: [`Tens digit ${t} × ${t + 1} = ${t * (t + 1)}.`, `Write 25 after it: ${t * (t + 1)}25.`, `${N}² = ${fmt(ans)}.`]};
+});
+fam('m-square-near', 'math', 3, 'Math', 'mental-mult', null, r => {
+  const base = pk(r, [20, 30, 40, 50, 60, 100]), a = ri(r, 1, 3), x = base - a, y = base + a, ans = x * y;
+  return {q: `${x} × ${y} = ?`, ans: fmt(ans), trap: fmt(base * base), wrong: [fmt(ans - 10), fmt(base * base + a * a)],
+    why: `Both sit ${a} away from ${base}: (${base} − ${a})(${base} + ${a}) = ${base}² − ${a}².`, how: [`${x} and ${y} are ${base} − ${a} and ${base} + ${a}.`, `So the product is ${base}² − ${a}² = ${fmt(base * base)} − ${a * a}.`, `= ${fmt(ans)}.`]};
+});
+fam('m-times11', 'math', 1, 'Math', 'mental-mult', null, r => {
+  const n = ri(r, 12, 98), a = Math.floor(n / 10), b = n % 10, ans = n * 11;
+  return {q: `${n} × 11 = ?`, ans: fmt(ans), trap: fmt(n * 10), wrong: [fmt(ans + 10), fmt(ans - 11)],
+    why: 'Times 11: put the sum of the two digits in the middle (carry if it\'s 10 or more).', how: [`Digits: ${a} and ${b}, sum ${a + b}.`, a + b < 10 ? `Put ${a + b} between them: ${a}${a + b}${b}.` : `${a + b} is 10+, so write ${(a + b) % 10} in the middle and carry 1: ${a + 1}${(a + b) % 10}${b}.`, `= ${fmt(ans)}.`]};
+});
+fam('m-times25', 'math', 2, 'Math', 'mental-mult', [[5, 10, 2], [25, 100, 4], [50, 100, 2]], (r, [m, up, down]) => {
+  const n = ri(r, 12, 96) * (m === 5 ? 2 : m === 25 ? 4 : 2), ans = n * m;
+  return {q: `${n} × ${m} = ?`, ans: fmt(ans), trap: fmt(n * m + n), wrong: [fmt(ans / 2), fmt(ans + up)],
+    why: `× ${m} is the same as × ${up} ÷ ${down}.`, how: [`${n} × ${up} = ${fmt(n * up)}.`, `÷ ${down} = ${fmt(ans)}.`]};
+});
+fam('m-recipe', 'math', 1, 'Math', 'ratios', [['cups of flour', 'pancakes'], ['eggs', 'cookies'], ['grams of sugar', 'muffins'], ['cups of rice', 'servings of biryani'], ['tbsp of butter', 'pieces of toast']], (r, [ing, food]) => {
+  const S = pk(r, [4, 6, 8, 10, 12]), T = pk(r, [2, 3, 5, 9, 15, 16, 18, 20, 24]), Qy = pk(r, [2, 3, 4, 6]); const ans = Qy * T / S; if (ans % 1 || T === S) return null;
+  return {q: `A recipe for ${S} ${food} needs ${Qy} ${ing}. How many ${ing} for ${T} ${food}?`, ans: fmt(ans), trap: fmt(Qy + T - S), wrong: [fmt(ans * 2), fmt(ans + 1)],
+    why: 'Scale by the ratio of servings, don\'t add the difference.', how: [`Per ${food.replace(/s$/, '')}: ${Qy} ÷ ${S} = ${fmt(Qy / S)} ${ing}.`, `× ${T} = ${fmt(ans)}.`]};
+});
+fam('m-units', 'math', 1, 'Math', 'units', [['hours', 'minutes', 60], ['minutes', 'seconds', 60], ['days', 'hours', 24], ['weeks', 'days', 7], ['kilograms', 'grams', 1000], ['metres', 'centimetres', 100], ['litres', 'millilitres', 1000]], (r, [big, small, f]) => {
+  const x = f === 7 ? pk(r, [2, 3, 5, 8, 12]) : pk(r, [1.5, 2.5, 3.5, 0.75, 4.25, 0.2, 2.4]), ans = x * f; if (ans % 1) return null;
+  return {q: `How many ${small} are in ${x} ${big}?`, ans: fmt(ans), trap: fmt(x * (f === 60 ? 100 : f * 10)), wrong: [fmt(ans / 2), fmt(ans + f)],
+    why: `1 ${big.replace(/s$/, '')} = ${fmt(f)} ${small}.`, how: [`1 ${big.replace(/s$/, '')} = ${fmt(f)} ${small}.`, `${x} × ${fmt(f)} = ${fmt(ans)}.`]};
+});
+fam('m-sdt', 'math', 1, 'Math', 'speed', [['drive', 'km/h', 'km'], ['cycle', 'km/h', 'km'], ['walk', 'km/h', 'km'], ['fly', 'km/h', 'km']], (r, [verb, sp, dist]) => {
+  const v = verb === 'walk' ? pk(r, [4, 5, 6]) : verb === 'cycle' ? pk(r, [12, 15, 20, 24]) : verb === 'fly' ? pk(r, [600, 800, 900]) : pk(r, [40, 50, 60, 80, 90]);
+  const t = pk(r, [0.5, 1.5, 2, 2.5, 3, 4]), D = v * t, ask = ri(r, 0, 2), tStr = x => x === 1 ? '1 hour' : x < 1 ? `${x * 60} minutes` : `${fmt(x)} hours`;
+  if (ask === 0) return {q: `You ${verb} ${fmt(D)} ${dist} at ${v} ${sp}. How long does it take?`, ans: tStr(t), trap: tStr(t * 2), wrong: [tStr(t + 1), tStr(Math.max(0.5, t - 0.5)) === tStr(t) ? tStr(t + 1.5) : tStr(Math.max(0.5, t - 0.5))], why: 'Time = distance ÷ speed.', how: ['Time = distance ÷ speed.', `${fmt(D)} ÷ ${v} = ${fmt(t)} hours.`]};
+  if (ask === 1) return {q: `You ${verb} at ${v} ${sp} for ${tStr(t)}. How far do you go?`, ans: `${fmt(D)} ${dist}`, trap: `${fmt(v + t)} ${dist}`, wrong: [`${fmt(D * 2)} ${dist}`, `${fmt(v / t)} ${dist}`], why: 'Distance = speed × time.', how: ['Distance = speed × time.', `${v} × ${fmt(t)} = ${fmt(D)} ${dist}.`]};
+  return {q: `You ${verb} ${fmt(D)} ${dist} in ${tStr(t)}. What's your average speed?`, ans: `${v} ${sp}`, trap: `${fmt(D * t)} ${sp}`, wrong: [`${fmt(v * 2)} ${sp}`, `${fmt(v + 10)} ${sp}`], why: 'Speed = distance ÷ time.', how: ['Speed = distance ÷ time.', `${fmt(D)} ÷ ${fmt(t)} = ${v} ${sp}.`]};
+});
+fam('m-compound', 'math', 3, 'Math', 'compounding', [['A town of', 'people', 'grows'], ['A colony of', 'bacteria', 'grows'], ['An account with', 'followers', 'grows'], ['A savings pot of $', '', 'grows']], (r, [pre, unit, verb]) => {
+  const N = pk(r, [1000, 2000, 5000, 10000, 20000]), g = pk(r, [10, 20, 50]), y = 2, ans = N * Math.pow(1 + g / 100, 2), simple = N * (1 + 2 * g / 100);
+  const show = x => pre.endsWith('$') ? usd(x) : fmt(x);
+  return {q: `${pre}${pre.endsWith('$') ? fmt(N) : ' ' + fmt(N) + ' ' + unit} ${verb} ${g}% a year. What will it be after 2 years?`, ans: show(ans), trap: show(simple), wrong: [show(N * (1 + g / 100)), show(ans + N / 10)],
+    why: 'The second year\'s growth applies to the bigger number.', how: [`Year 1: ${show(N)} × ${1 + g / 100} = ${show(N * (1 + g / 100))}.`, `Year 2: ${show(N * (1 + g / 100))} × ${1 + g / 100} = ${show(ans)}.`, `${show(simple)} forgets that growth compounds.`]};
+});
+fam('m-bag', 'math', 2, 'Probability', 'probability-basics', [['bag', 'marbles'], ['jar', 'sweets'], ['box', 'balls']], (r, [box, things]) => {
+  const R = ri(r, 1, 9), B = ri(r, 1, 9), Gn = ri(r, 1, 9), T = R + B + Gn;
+  return {q: `A ${box} has ${R} red, ${B} blue and ${Gn} green ${things}. You pick one at random. Chance it's red?`, ans: frac(R, T), trap: frac(R, T - R), wrong: ['1/3', frac(B, T), frac(R + 1, T + 1), frac(Gn, T)],
+    why: 'Favourable ÷ total.', how: [`Total: ${R} + ${B} + ${Gn} = ${T}.`, `Red: ${R} of ${T} = ${frac(R, T)}.`, `${frac(R, T - R)} compares red with not-red; three colours doesn't mean 1/3 each.`]};
+});
+fam('m-dice-sum', 'math', 3, 'Probability', 'probability-basics', null, r => {
+  const S = ri(r, 2, 12), ways = 6 - Math.abs(7 - S);
+  return {q: `You roll two dice. What's the chance they add up to ${S}?`, ans: frac(ways, 36), trap: '1/11', wrong: [frac(ways + 1, 36), frac(1, 6) === frac(ways, 36) ? frac(1, 9) : frac(1, 6)],
+    why: '36 equally likely pairs, and different sums have different numbers of ways.', how: ['Two dice give 6 × 6 = 36 equally likely results.', `Ways to make ${S}: ${ways}.`, `${ways}/36${frac(ways, 36) !== ways + '/36' ? ' = ' + frac(ways, 36) : ''}. The 11 possible sums are not equally likely.`]};
+});
+fam('m-order-ops', 'math', 1, 'Math', 'order-ops', null, r => {
+  const a = ri(r, 2, 12), b = ri(r, 2, 9), c = ri(r, 2, 9), v = ri(r, 0, 2);
+  if (v === 0) return {q: `${a} + ${b} × ${c} = ?`, ans: a + b * c, trap: (a + b) * c, wrong: [a + b + c, a * b + c], why: 'Multiply before you add.', how: [`${b} × ${c} = ${b * c} first.`, `${a} + ${b * c} = ${a + b * c}.`]};
+  if (v === 1) { const d = b * c; return {q: `${a * 10} − ${d} ÷ ${c} = ?`, ans: a * 10 - b, trap: Math.round((a * 10 - d) / c * 100) / 100, wrong: [a * 10 - d, a * 10 + b], why: 'Divide before you subtract.', how: [`${d} ÷ ${c} = ${b} first.`, `${a * 10} − ${b} = ${a * 10 - b}.`]}; }
+  return {q: `${a} × ${b} − ${c} × 2 = ?`, ans: a * b - c * 2, trap: (a * b - c) * 2, wrong: [a * (b - c) * 2, a * b - c], why: 'Do both multiplications before subtracting.', how: [`${a} × ${b} = ${a * b} and ${c} × 2 = ${c * 2}.`, `${a * b} − ${c * 2} = ${a * b - c * 2}.`]};
+});
+fam('m-lcm', 'math', 3, 'Math', 'lcm', [['Two buses leave the station', 'minutes', 'leave together'], ['Two lighthouses flash', 'seconds', 'flash together'], ['Two alarms ring', 'minutes', 'ring together'], ['Two runners finish a lap', 'minutes', 'cross the start line together']], (r, [who, unit, together]) => {
+  let A, B; do { A = pk(r, [4, 6, 8, 9, 10, 12, 15, 18, 20]); B = pk(r, [4, 6, 8, 9, 10, 12, 15, 18, 20]); } while (A === B || gcdN(A, B) === 1 || lcmN(A, B) === A * B);
+  const L = lcmN(A, B);
+  return {q: `${who} every ${A} and every ${B} ${unit}. They just did it at the same moment. When will they next ${together}?`, ans: `${L} ${unit}`, trap: `${A * B} ${unit}`, wrong: [`${A + B} ${unit}`, `${L * 2} ${unit}`],
+    why: 'The least common multiple is the first time both cycles line up.', how: [`Multiples of ${A}: ${[1, 2, 3, 4].map(i => A * i).join(', ')}…`, `Multiples of ${B}: ${[1, 2, 3, 4].map(i => B * i).join(', ')}…`, `First shared one: ${L}. ${A * B} works but isn't the first.`]};
+});
+fam('m-rem9', 'math', 2, 'Math', 'divisibility', [9, 3], (r, d) => {
+  const n = ri(r, 1000, 99999), ds = String(n).split('').reduce((a, b) => a + +b, 0), ans = n % d;
+  const wrong = d === 3 ? [0, 1, 2].filter(x => x !== ans).concat(['Can\'t tell without dividing']) : pkN(r, [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(x => x !== ans), 3);
+  return {q: `What's the remainder when ${fmt(n)} is divided by ${d}?`, ans, wrong,
+    why: `The remainder by ${d} is the same as the digit sum's remainder.`, how: [`Digit sum: ${String(n).split('').join(' + ')} = ${ds}.`, `${ds} ÷ ${d} leaves ${ds % d}.`, `So ${fmt(n)} leaves ${ans}.`]};
+});
+fam('m-pct-change', 'math', 2, 'Math', 'percent-change', [['Rent', 'a month'], ['A salary', 'a year'], ['Subscribers', ''], ['A ticket price', ''], ['Coffee', 'a cup']], (r, [what, per]) => {
+  const A = pk(r, [20, 40, 50, 80, 200, 400, 500, 800, 1000]), p = pk(r, [5, 10, 20, 25, 50, 75]), B = A * (1 + p / 100); if (B % 1) return null;
+  const money = what !== 'Subscribers', show = x => money ? usd(x) : fmt(x);
+  return {q: `${what} went from ${show(A)} to ${show(B)}${per ? ' ' + per : ''}. What's the percentage increase?`, ans: `${p}%`, trap: pct1((B - A) / B * 100), wrong: [`${fmt(B - A)}%` === `${p}%` ? `${p * 2}%` : `${fmt(B - A)}%`, `${p + 5}%`],
+    why: 'Divide the change by where you started.', how: [`Change: ${show(B)} − ${show(A)} = ${show(B - A)}.`, `${fmt(B - A)} ÷ ${fmt(A)} = ${p / 100}.`, `= ${p}%. Dividing by the new value is the trap.`]};
+});
+fam('m-pct-points', 'math', 3, 'Math', 'pct-points', [['An interest rate', 'rose'], ['An approval rating', 'rose'], ['Unemployment', 'rose'], ['A market share', 'grew'], ['A conversion rate', 'rose']], (r, [what, verb]) => {
+  const [a, b] = pk(r, [[4, 5], [2, 3], [10, 12], [20, 25], [5, 6], [8, 10], [40, 50]]), rel = (b - a) / a * 100;
+  return {q: `${what} ${verb} from ${a}% to ${b}%. By what percent did it ${verb === 'grew' ? 'grow' : 'rise'}?`, ans: pct1(rel), trap: `${b - a}%`, wrong: [pct1((b - a) / b * 100), pct1(rel * 2)],
+    why: `It rose ${b - a} percentage point${b - a > 1 ? 's' : ''}, but ${pct1(rel)} in relative terms.`, how: [`Change: ${b - a} percentage point${b - a > 1 ? 's' : ''}.`, `Relative change: ${b - a} ÷ ${a} = ${fmt(rel / 100)}.`, `= ${pct1(rel)}. "${b - a}%" mixes up points and percent.`]};
+});
+fam('m-pow2', 'math', 2, 'Math', 'binary', null, r => {
+  const n = ri(r, 5, 16), ans = Math.pow(2, n);
+  return {q: `2 to the power ${n} (2^${n}) = ?`, ans: fmt(ans), trap: fmt(2 * n), wrong: [fmt(n * n), fmt(ans / 2)],
+    why: 'Each step doubles.', how: ['2^10 = 1,024 is a handy anchor.', n >= 10 ? `2^${n} = 1,024 × 2^${n - 10} = ${fmt(ans)}.` : `Double ${n} times: ${Array.from({length: n}, (_, i) => Math.pow(2, i + 1)).join(', ')}.`]};
+});
+fam('m-odd-sum', 'math', 2, 'Math', 'sum-series', null, r => {
+  const n = ri(r, 5, 30), last = 2 * n - 1;
+  return {q: `1 + 3 + 5 + … + ${last} = ?`, ans: n * n, trap: last * n, wrong: [n * (n + 1), (last + 1) * n / 2 + 1],
+    why: `The sum of the first n odd numbers is n².`, how: [`There are ${n} odd numbers from 1 to ${last}.`, `Pair first and last: 1 + ${last} = ${last + 1}, ${n / 2} pairs${n % 2 ? ' (plus a middle term)' : ''}.`, `Total: ${n}² = ${n * n}.`]};
+});
+fam('m-area', 'math', 2, 'Math', 'area', [['square', 'side'], ['rectangle', 'side'], ['circle', 'radius'], ['photo', 'side'], ['pizza', 'radius']], (r, [shape, dim]) => {
+  const k = pk(r, [2, 3, 4]);
+  return {q: `You make every ${dim} of a ${shape} ${k} times as long. How many times bigger is its area?`, ans: `${k * k}×`, trap: `${k}×`, wrong: [`${k * 2}×`, `${k * k * k}×`],
+    why: 'Area grows with the square of the scale.', how: ['Area multiplies two lengths together.', `Each length × ${k}, so area × ${k} × ${k} = ${k * k}.`]};
+});
+fam('m-rect', 'math', 1, 'Math', 'area', ['garden', 'room', 'poster', 'field'], (r, thing) => {
+  const a = ri(r, 3, 15), b = ri(r, 3, 15); if (a === b) return null; const per = r() < 0.5;
+  return per ? {q: `A rectangular ${thing} is ${a} m by ${b} m. What's its perimeter?`, ans: `${2 * (a + b)} m`, trap: `${a * b} m`, wrong: [`${a + b} m`, `${2 * (a + b) + 2} m`], why: 'Perimeter adds all four sides.', how: ['Perimeter = 2 × (length + width).', `2 × (${a} + ${b}) = ${2 * (a + b)} m.`]}
+    : {q: `A rectangular ${thing} is ${a} m by ${b} m. What's its area?`, ans: `${a * b} m²`, trap: `${2 * (a + b)} m²`, wrong: [`${a + b} m²`, `${a * b + a} m²`], why: 'Area = length × width.', how: ['Area = length × width.', `${a} × ${b} = ${a * b} m².`]};
+});
+fam('m-avg-add', 'math', 3, 'Math', 'mean-median', [['test scores', 'score'], ['ages', 'person aged'], ['weights in kg', 'bag weighing']], (r, [things, newone]) => {
+  const n = ri(r, 3, 9), A = ri(r, 10, 60), x = A + n + 1 + ri(r, 0, 3) * (n + 1); const ans = (n * A + x) / (n + 1); if (ans % 1) return null;
+  return {q: `The average of ${n} ${things} is ${A}. A ${newone} ${x} is added. What's the new average?`, ans, trap: (A + x) / 2 % 1 ? Math.round((A + x) / 2) : (A + x) / 2, wrong: [A + 1 === ans ? A + 2 : A + 1, ans + 2],
+    why: 'Work with totals, not averages.', how: [`Old total: ${n} × ${A} = ${n * A}.`, `New total: ${n * A} + ${x} = ${n * A + x}, across ${n + 1}.`, `${n * A + x} ÷ ${n + 1} = ${ans}. Averaging ${A} and ${x} ignores how many there were.`]};
+});
+fam('m-coins-atleast', 'math', 3, 'Probability', 'at-least-one', null, r => {
+  const n = ri(r, 2, 6), p = (1 - Math.pow(0.5, n)) * 100;
+  return {q: `Flip a fair coin ${n} times. Chance of at least one head?`, ans: pct1(p), trap: n * 50 >= 100 ? '100%' : `${n * 50}%`, wrong: ['50%', pct1(Math.pow(0.5, n) * 100)],
+    why: 'Find the chance of no heads, then subtract from 1.', how: ['No heads means tails every time.', `(1/2)^${n} = ${fmt(Math.pow(0.5, n) * 100)}%.`, `1 − that = ${pct1(p)}. It can never reach 100%.`]};
+});
+fam('m-exact-heads', 'math', 4, 'Probability', 'counting', null, r => {
+  const n = ri(r, 3, 6), k = ri(r, 1, n - 1); let c = 1; for (let i = 0; i < k; i++) c = c * (n - i) / (i + 1);
+  return {q: `Flip ${n} fair coins. Chance of exactly ${k} heads?`, ans: frac(c, Math.pow(2, n)), trap: frac(k, n), wrong: [frac(1, Math.pow(2, n)), frac(c + 1, Math.pow(2, n))],
+    why: 'Count the arrangements with exactly that many heads.', how: [`Total outcomes: 2^${n} = ${Math.pow(2, n)}.`, `Ways to choose which ${k} coins are heads: C(${n},${k}) = ${c}.`, `${c}/${Math.pow(2, n)} = ${frac(c, Math.pow(2, n))}.`]};
+});
+
+const hrsS = n => `${fmt(n)} hour${n === 1 ? '' : 's'}`;
+// ── Aptitude ──
+fam('a-pipes', 'apt', 3, 'Quant', 'work', [['tank', 'tap', 'leak'], ['pool', 'hose', 'drain'], ['bathtub', 'tap', 'plug hole']], (r, [box, filler, emptier]) => {
+  const [x, y] = pk(r, [[4, 6], [3, 6], [6, 12], [2, 3], [4, 12], [10, 15], [8, 24], [6, 10], [12, 20]]), ans = x * y / (y - x);
+  return {q: `A ${filler} fills a ${box} in ${x} hours. A ${emptier} empties it in ${y} hours. With both open, how long to fill it?`, ans: hrsS(ans), trap: hrsS(y - x), wrong: [hrsS(Math.round(x * y / (x + y) * 10) / 10), hrsS(ans + x)],
+    why: 'Subtract the emptying rate from the filling rate.', how: [`Fill rate: 1/${x} per hour. Empty rate: 1/${y}.`, `Net: 1/${x} − 1/${y} = 1/${ans} per hour.`, `So ${ans} hours.`]};
+});
+fam('a-train-platform', 'apt', 3, 'Quant', 'speed', ['platform', 'bridge', 'tunnel'], (r, place) => {
+  const v = pk(r, [36, 54, 72, 90]), ms = v * 5 / 18, t = ri(r, 10, 30), total = ms * t, L = Math.round(total * pk(r, [0.3, 0.4, 0.5, 0.6]) / 10) * 10, P = total - L;
+  if (P <= 0 || L <= 0) return null;
+  return {q: `A ${L} m train at ${v} km/h crosses a ${P} m ${place}. How long does it take?`, ans: `${t} s`, trap: `${fmt(Math.round(P / ms * 10) / 10)} s`, wrong: [`${fmt(Math.round(L / ms * 10) / 10)} s`, `${t + 5} s`],
+    why: 'The train has to cover its own length plus the platform\'s.', how: [`Convert: ${v} km/h = ${ms} m/s.`, `Distance: ${L} + ${P} = ${total} m.`, `${total} ÷ ${ms} = ${t} s.`]};
+});
+fam('a-trains-meet', 'apt', 3, 'Quant', 'speed', [['opposite directions', 'add'], ['the same direction', 'subtract']], (r, [dir, op]) => {
+  const v1 = pk(r, [54, 72, 90]), v2 = pk(r, [36, 54, 18]); if (v1 === v2) return null;
+  const rel = op === 'add' ? v1 + v2 : v1 - v2, ms = rel * 5 / 18, t = ri(r, 6, 20), sum = ms * t; if (sum % 1) return null;
+  const L1 = Math.round(sum * 0.6 / 10) * 10, L2 = sum - L1; if (L2 <= 0) return null;
+  const other = op === 'add' ? (v1 - v2) * 5 / 18 : (v1 + v2) * 5 / 18;
+  return {q: `Two trains, ${L1} m and ${L2} m long, run on parallel tracks in ${dir} at ${v1} km/h and ${v2} km/h. How long do they take to pass each other completely?`, ans: `${t} s`, trap: `${fmt(Math.round(sum / other * 10) / 10)} s`, wrong: [`${t * 2} s`, `${t + 4} s`],
+    why: `In ${dir}, ${op} the speeds.`, how: [`Relative speed: ${v1} ${op === 'add' ? '+' : '−'} ${v2} = ${rel} km/h = ${ms} m/s.`, `Distance: both lengths, ${L1} + ${L2} = ${sum} m.`, `${sum} ÷ ${ms} = ${t} s.`]};
+});
+fam('a-boat', 'apt', 3, 'Quant', 'speed', [['boat', 'still water'], ['swimmer', 'still water'], ['kayak', 'calm water']], (r, [who, still]) => {
+  const b = ri(r, 6, 15), s = ri(r, 1, 4), askBoat = r() < 0.5;
+  return {q: `A ${who} goes ${b + s} km/h downstream and ${b - s} km/h upstream. What is ${askBoat ? `its speed in ${still}` : 'the speed of the current'}?`, ans: `${askBoat ? b : s} km/h`, trap: `${askBoat ? 2 * s : b} km/h`, wrong: [`${b + s} km/h`, `${askBoat ? b + 1 : s + 2} km/h`],
+    why: 'Downstream adds the current, upstream subtracts it.', how: [`Down = ${who} + current = ${b + s}. Up = ${who} − current = ${b - s}.`, askBoat ? `${who} speed = (${b + s} + ${b - s}) ÷ 2 = ${b}.` : `Current = (${b + s} − ${b - s}) ÷ 2 = ${s}.`]};
+});
+fam('a-profit', 'apt', 2, 'Quant', 'profit-loss', ['phone', 'bike', 'lamp', 'watch', 'chair'], (r, item) => {
+  const C = pk(r, [40, 50, 80, 100, 120, 200, 250, 400]), p = pk(r, [10, 20, 25, 50]), v = ri(r, 0, 2), S = C * (1 + p / 100); if (S % 1) return null;
+  if (v === 0) return {q: `A ${item} bought for ${usd(C)} sells for ${usd(S)}. Profit percentage?`, ans: `${p}%`, trap: pct1((S - C) / S * 100), wrong: [`${p + 10}%`, `${fmt(S - C)}%` === `${p}%` ? `${p * 2}%` : `${fmt(S - C)}%`],
+    why: 'Profit % is measured on the cost price.', how: [`Profit = ${usd(S)} − ${usd(C)} = ${usd(S - C)}.`, `${fmt(S - C)} ÷ ${fmt(C)} = ${p / 100} = ${p}%.`]};
+  if (v === 1) return {q: `A shop sells a ${item} at ${p}% profit for ${usd(S)}. What did it cost?`, ans: usd(C), trap: usd(S * (1 - p / 100)), wrong: [usd(S - p), usd(C + 10)],
+    why: `${usd(S)} is ${100 + p}% of the cost.`, how: [`Selling price = cost × ${1 + p / 100}.`, `Cost = ${usd(S)} ÷ ${1 + p / 100} = ${usd(C)}.`, `Taking ${p}% off ${usd(S)} is the trap.`]};
+  const L = C * (1 - p / 100);
+  return {q: `A ${item} bought for ${usd(C)} sells for ${usd(L)}. Loss percentage?`, ans: `${p}%`, trap: pct1((C - L) / L * 100), wrong: [`${p + 5}%`, `${100 - p}%`],
+    why: 'Loss % is measured on the cost price.', how: [`Loss = ${usd(C)} − ${usd(L)} = ${usd(C - L)}.`, `${fmt(C - L)} ÷ ${fmt(C)} = ${p}%.`]};
+});
+fam('a-successive', 'apt', 2, 'Quant', 'pct-chain', ['sale', 'coupon', 'clearance'], (r, kind) => {
+  const [a, b] = pk(r, [[20, 10], [10, 10], [30, 20], [50, 20], [20, 20], [25, 20], [40, 10]]), net = 100 - (100 - a) * (100 - b) / 100;
+  return {q: `A ${kind} gives ${a}% off, then another ${b}% off the reduced price. Total discount?`, ans: pct1(net), trap: `${a + b}%`, wrong: [pct1(net - 5), `${Math.max(a, b)}%`],
+    why: 'The second discount applies to an already reduced price.', how: [`You pay ${100 - a}% then ${100 - b}% of that: ${(100 - a) / 100} × ${(100 - b) / 100} = ${(100 - a) * (100 - b) / 10000}.`, `So you pay ${fmt((100 - a) * (100 - b) / 100)}%: a ${pct1(net)} discount.`, `${a + b}% double-counts.`]};
+});
+fam('a-mixture', 'apt', 3, 'Quant', 'mixtures', [['a juice drink', 'fruit juice'], ['salt water', 'salt'], ['syrup', 'sugar'], ['paint', 'pigment']], (r, [mix, part]) => {
+  const x = pk(r, [1, 2, 3, 4]), y = pk(r, [1, 2, 3, 4]), a = pk(r, [10, 20, 30, 40]), b = pk(r, [50, 60, 70, 80]), ans = (x * a + y * b) / (x + y); if (ans % 1 || x === y) return null;
+  return {q: `You mix ${x} L of ${mix} that's ${a}% ${part} with ${y} L that's ${b}% ${part}. What % ${part} is the mix?`, ans: `${ans}%`, trap: `${(a + b) / 2}%`, wrong: [`${a + b}%`, `${ans + 5}%`],
+    why: 'Weight each strength by its volume.', how: [`${cap(part)} from the first: ${x} × ${a}% = ${fmt(x * a / 100)} L. From the second: ${y} × ${b}% = ${fmt(y * b / 100)} L.`, `Total ${part}: ${fmt((x * a + y * b) / 100)} L in ${x + y} L.`, `${fmt((x * a + y * b) / 100)} ÷ ${x + y} = ${ans}%.`]};
+});
+fam('a-ages', 'apt', 3, 'Quant', 'ages', [['mother', 'daughter'], ['father', 'son'], ['aunt', 'niece'], ['coach', 'player']], (r, [old, young]) => {
+  const y = ri(r, 4, 15), k = pk(r, [3, 4, 5]), o = k * y, n = ri(r, 3, 12), sum = o + y + 2 * n;
+  return {q: `A ${old} is ${k} times as old as her ${young === 'son' || young === 'player' ? young : young}. In ${n} years their ages will add up to ${sum}. How old is the ${young} now?`.replace('her son', 'his son').replace('her player', 'their player'), ans: y, trap: (sum - n) / (k + 1) % 1 ? Math.round((sum - n) / (k + 1)) : (sum - n) / (k + 1), wrong: [y + n, Math.round(sum / (k + 1))],
+    why: 'Both people age by the same number of years.', how: [`Now: ${young} = x, ${old} = ${k}x.`, `In ${n} years: x + ${n} + ${k}x + ${n} = ${sum}, so ${k + 1}x = ${sum - 2 * n}.`, `x = ${y}.`]};
+});
+fam('a-avg-remove', 'apt', 3, 'Quant', 'mean-median', [['numbers', 'removed'], ['players\' scores', 'dropped'], ['monthly bills', 'removed']], (r, [things, verb]) => {
+  const n = ri(r, 4, 9), A = ri(r, 20, 60), B = ri(r, A - 6, A + 6); if (A === B) return null; const x = n * A - (n - 1) * B; if (x <= 0) return null;
+  return {q: `The average of ${n} ${things} is ${A}. When one is ${verb}, the average of the rest is ${B}. Which value was ${verb}?`, ans: x, trap: Math.abs(A - B), wrong: [x + n, A + B > x ? A + B : x - n],
+    why: 'Compare totals, not averages.', how: [`Total before: ${n} × ${A} = ${n * A}.`, `Total after: ${n - 1} × ${B} = ${(n - 1) * B}.`, `${n * A} − ${(n - 1) * B} = ${x}.`]};
+});
+fam('a-partnership', 'apt', 2, 'Quant', 'ratios', ['business', 'food stall', 'startup', 'lemonade stand'], (r, biz) => {
+  const [A, B] = pkN(r, NAMES, 2), a = pk(r, [2, 3, 4, 5]), b = pk(r, [1, 2, 3, 5, 6]), unit = pk(r, [1000, 2000, 5000]), P = (a + b) * pk(r, [1000, 2000, 3000]); if (a === b) return null;
+  const ans = P * a / (a + b);
+  return {q: `${A} puts ${usd(a * unit)} into a ${biz} and ${B} puts in ${usd(b * unit)}. Profit of ${usd(P)} is shared by investment. How much does ${A} get?`, ans: usd(ans), trap: usd(P / 2), wrong: [usd(P * b / (a + b)), usd(ans + 1000)],
+    why: 'Share in the ratio of what each put in.', how: [`Ratio ${A}:${B} = ${a * unit}:${b * unit} = ${a}:${b}.`, `${A} gets ${a}/${a + b} of ${usd(P)}.`, `= ${usd(ans)}.`]};
+});
+fam('a-pct-find', 'apt', 1, 'Quant', 'reverse-pct', null, r => {
+  const p = pk(r, [10, 20, 25, 40, 50, 60, 75]), N = pk(r, [40, 60, 80, 120, 200, 240, 300, 400]), part = p * N / 100; if (part % 1) return null; const v = r() < 0.5;
+  if (v) return {q: `${p}% of a number is ${part}. What's the number?`, ans: N, trap: part * p / 100 % 1 ? Math.round(part * p / 100) : part * p / 100, wrong: [part + p, N * 2],
+    why: 'Divide by the percentage as a decimal.', how: [`${p}% × N = ${part}.`, `N = ${part} ÷ ${p / 100} = ${N}.`]};
+  return {q: `${part} is what percent of ${N}?`, ans: `${p}%`, trap: `${fmt(part / N)}%`, wrong: [`${p + 10}%`, `${Math.max(5, p - 15)}%`],
+    why: 'Part ÷ whole × 100.', how: [`${part} ÷ ${N} = ${p / 100}.`, `× 100 = ${p}%.`]};
+});
+fam('a-letters', 'apt', 2, 'Reasoning', 'seq', ['skip', 'reverse', 'growing'], (r, kind) => {
+  const L = i => String.fromCharCode(65 + ((i % 26) + 26) % 26);
+  let terms, next, rule;
+  if (kind === 'skip') { const s = ri(r, 0, 8), k = ri(r, 2, 4); terms = [0, 1, 2, 3].map(i => L(s + i * k)); next = L(s + 4 * k); rule = `forward ${k} letters each time`; }
+  else if (kind === 'reverse') { const s = ri(r, 18, 25), k = ri(r, 1, 3); terms = [0, 1, 2, 3].map(i => L(s - i * k)); next = L(s - 4 * k); rule = `back ${k} letter${k > 1 ? 's' : ''} each time`; }
+  else { const s = ri(r, 0, 5); let p = s; terms = [L(p)]; for (let i = 1; i <= 3; i++) { p += i; terms.push(L(p)); } next = L(p + 4); rule = 'the gap grows by one each time (+1, +2, +3, then +4)'; }
+  const t3 = terms[3].charCodeAt(0) - 65, lastGap = t3 - (terms[2].charCodeAt(0) - 65), idx = next.charCodeAt(0) - 65;
+  return {q: `What comes next: ${terms.join(', ')}, …`, ans: next, trap: kind === 'growing' ? L(t3 + lastGap) : L(idx + 1), wrong: [L(idx - 1), L(idx + 2), L(idx + 3)],
+    why: `Rule: ${rule}.`, how: [`Positions: ${terms.map(t => t + '=' + (t.charCodeAt(0) - 64)).join(', ')}.`, `Rule: ${rule}.`, `Next: ${next} (${idx + 1}).`]};
+});
+fam('a-odd-num', 'apt', 2, 'Reasoning', 'odd-one-out', ['prime', 'square', 'even', 'multiple of 7'], (r, kind) => {
+  const isPrime = n => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
+  const test = {prime: isPrime, square: n => Math.sqrt(n) % 1 === 0, even: n => n % 2 === 0, 'multiple of 7': n => n % 7 === 0}[kind];
+  const pool = Array.from({length: 120}, (_, i) => i + 2), yes = pool.filter(test), no = pool.filter(n => !test(n) && (kind !== 'even' || true));
+  const group = pkN(r, yes, 4), odd = pk(r, kind === 'prime' ? no.filter(n => n % 2) : kind === 'even' ? no : no.filter(n => n > 10)); const opts = group.slice(0, 3).concat([odd]);
+  return {q: `Which is the odd one out: ${opts.slice().sort((a, b) => a - b).join(', ')}?`, ans: odd, wrong: group.slice(0, 3),
+    why: `The others are all ${kind === 'square' ? 'perfect squares' : kind === 'prime' ? 'prime' : kind === 'even' ? 'even' : 'multiples of 7'}.`, how: [`Test each number for a shared property.`, `${group.slice(0, 3).join(', ')} are ${kind === 'square' ? 'perfect squares' : kind === 'prime' ? 'prime' : kind === 'even' ? 'even' : 'multiples of 7'}.`, `${odd} isn't.`]};
+});
+fam('a-num-analogy', 'apt', 2, 'Reasoning', 'analogy', [['square', n => n * n], ['cube', n => n * n * n], ['double plus one', n => 2 * n + 1], ['add 10', n => n + 10]], (r, [name, f]) => {
+  const a = ri(r, 2, name === 'cube' ? 6 : 12); let b; do { b = ri(r, 2, name === 'cube' ? 7 : 15); } while (b === a);
+  return {q: `${a} : ${f(a)} :: ${b} : ?`, ans: f(b), trap: name === 'square' ? b * b * b : name === 'cube' ? b * b : f(b) + 1, wrong: [f(b) + b, f(a) + (b - a), f(b) * 2, f(b) - 2],
+    why: `The rule is: ${name}.`, how: [`${a} → ${f(a)}: the rule is "${name}".`, `Apply it to ${b}: ${f(b)}.`]};
+});
+fam('a-word-sum', 'apt', 2, 'Reasoning', 'codes', null, r => {
+  const words = ['CAT', 'DOG', 'SUN', 'PEN', 'MAP', 'BOX', 'CUP', 'HAT', 'BED', 'EGG', 'ICE', 'KEY'], [w1, w2] = pkN(r, words, 2), val = w => w.split('').reduce((s, c) => s + c.charCodeAt(0) - 64, 0);
+  return {q: `If ${w1} = ${val(w1)} (adding letter positions, A = 1), what is ${w2}?`, ans: val(w2), trap: val(w2) + 1, wrong: [val(w2) - 3, val(w2) + 5],
+    why: 'Add each letter\'s position in the alphabet.', how: [`${w1}: ${w1.split('').map(c => c + '=' + (c.charCodeAt(0) - 64)).join(' + ')} = ${val(w1)}.`, `${w2}: ${w2.split('').map(c => c + '=' + (c.charCodeAt(0) - 64)).join(' + ')} = ${val(w2)}.`]};
+});
+fam('a-mirror', 'apt', 2, 'Reasoning', 'codes', null, r => {
+  const words = ['CAT', 'DOG', 'SUN', 'MAP', 'BOX', 'HAT', 'BAG', 'FAN', 'KID', 'LOG'], w = pk(r, words), m = s => s.split('').map(c => String.fromCharCode(155 - c.charCodeAt(0))).join('');
+  const ex = pk(r, words.filter(x => x !== w));
+  return {q: `If ${ex} is written as ${m(ex)} (A↔Z, B↔Y, …), how is ${w} written?`, ans: m(w), trap: w.split('').reverse().join(''), wrong: [m(w).split('').reverse().join(''), w.split('').map(c => String.fromCharCode((c.charCodeAt(0) - 64) % 26 + 65)).join('')],
+    why: 'Each letter is swapped with its mirror in the alphabet.', how: ['A↔Z, B↔Y, C↔X …: position p becomes 27 − p.', `${w.split('').map(c => c + '→' + m(c)).join(', ')}.`, `${w} becomes ${m(w)}.`]};
+});
+fam('a-directions', 'apt', 2, 'Reasoning', 'directions', ['walk', 'drive', 'cycle'], (r, verb) => {
+  const [a, b, c] = pk(r, [[3, 4, 5], [6, 8, 10], [5, 12, 13], [9, 12, 15], [8, 15, 17]]), [d1, d2] = pk(r, [['north', 'east'], ['south', 'west'], ['east', 'south'], ['west', 'north']]);
+  return {q: `You ${verb} ${a} km ${d1}, then ${b} km ${d2}. How far are you from where you started, in a straight line?`, ans: `${c} km`, trap: `${a + b} km`, wrong: [`${b - a} km`, `${c + 1} km`],
+    why: 'The two legs make a right angle, so use Pythagoras.', how: [`${d1} then ${d2} is a right-angle turn.`, `√(${a}² + ${b}²) = √(${a * a} + ${b * b}) = √${c * c}.`, `= ${c} km.`]};
+});
+fam('a-turns', 'apt', 2, 'Reasoning', 'directions', null, r => {
+  const dirs = ['north', 'east', 'south', 'west'], s = ri(r, 0, 3), turns = Array.from({length: ri(r, 2, 4)}, () => pk(r, ['right', 'left', 'right', 'around']));
+  let d = s; turns.forEach(t => { d = (d + (t === 'right' ? 1 : t === 'left' ? 3 : 2)) % 4; });
+  const ans = dirs[d];
+  return {q: `You face ${dirs[s]}. You turn ${turns.map(t => t === 'around' ? 'around' : t).join(', then ')}. Which way are you facing?`, ans: cap(ans), wrong: dirs.filter(x => x !== ans).map(cap),
+    why: 'Right is a quarter turn clockwise, left anticlockwise, around is half.', how: [`Start: ${dirs[s]}.`, ...turns.map((t, i) => { let e = s; for (let j = 0; j <= i; j++) e = (e + (turns[j] === 'right' ? 1 : turns[j] === 'left' ? 3 : 2)) % 4; return `Turn ${t}: ${dirs[e]}.`; })]};
+});
+fam('a-relations', 'apt', 2, 'Reasoning', 'relations', null, r => {
+  const forms = [["mother's brother", 'uncle', 'cousin'], ["father's father", 'grandfather', 'uncle'], ["sister's son", 'nephew', 'cousin'], ["brother's daughter", 'niece', 'cousin'], ["mother's mother's only daughter", 'mother', 'aunt'], ["father's only son's son", 'son', 'nephew'], ["uncle's son", 'cousin', 'brother'], ["son's wife", 'daughter-in-law', 'sister-in-law']];
+  const [chain, ans, trap] = pk(r, forms), name = pk(r, ['Ravi', 'Tom', 'Omar', 'Ben', 'Kofi', 'Ivan']);
+  const others = ['uncle', 'grandfather', 'nephew', 'niece', 'cousin', 'brother', 'mother', 'aunt', 'son', 'daughter-in-law', 'sister-in-law'].filter(x => x !== ans && x !== trap);
+  return {q: `Who is ${name}'s ${chain} to ${name}?`, ans: cap(ans), trap: cap(trap), wrong: pkN(r, others, 2).map(cap),
+    why: 'Resolve the chain one step at a time, starting closest to the person.', how: [`Read it from ${name} outward: ${chain.split("'s ").join(' → ')}.`, chain.includes('only') ? `"Only" pins it to one person, who may be ${name}'s own parent or ${name} himself.` : 'Each step is a single relationship.', `That makes them ${name}'s ${ans}.`]};
+});
+fam('a-leap', 'apt', 3, 'Reasoning', 'calendar', null, r => {
+  const y = pk(r, [1900, 2000, 2024, 2100, 1996, 2023, 2400, 1800, 2016, 2200, 2028]), leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  return {q: `Was (or will) ${y} be a leap year?`, ans: leap ? 'Yes' : 'No', trap: leap ? 'No' : 'Yes', wrong: ['It depends on the country', 'Can\'t tell without a calendar'],
+    why: 'Divisible by 4, except century years, which must be divisible by 400.', how: [`${y} ÷ 4 ${y % 4 ? 'leaves a remainder' : 'divides evenly'}.`, y % 100 === 0 ? `It's a century year, so it must also divide by 400: ${y % 400 === 0 ? 'it does' : 'it doesn\'t'}.` : 'It isn\'t a century year, so the 4-rule decides.', leap ? 'Leap year.' : 'Not a leap year.']};
+});
+fam('a-arrange', 'apt', 2, 'Quant', 'perm', [['people in a row of seats', 'arrange'], ['books on a shelf', 'arrange'], ['runners finishing a race', 'finish']], (r, [things, verb]) => {
+  const n = ri(r, 3, 7); let f = 1; for (let i = 2; i <= n; i++) f *= i;
+  return {q: `In how many different orders can ${n} ${things} be arranged?`, ans: fmt(f), trap: fmt(n * n), wrong: [fmt(n * (n - 1)), fmt(f / 2)],
+    why: `${n}! = ${n} × ${n - 1} × … × 1.`, how: [`First spot: ${n} choices, then ${n - 1}, then ${n - 2}…`, `${Array.from({length: n}, (_, i) => n - i).join(' × ')} = ${fmt(f)}.`]};
+});
+fam('a-choose', 'apt', 3, 'Quant', 'perm', [['players for a team', 'squad'], ['toppings', 'menu'], ['books to take on holiday', 'shelf']], (r, [things, from]) => {
+  const n = ri(r, 5, 10), k = ri(r, 2, 3); let c = 1, p = 1; for (let i = 0; i < k; i++) { c = c * (n - i) / (i + 1); p *= (n - i); }
+  return {q: `How many ways can you choose ${k} ${things} from ${n}, if order doesn't matter?`, ans: c, trap: p, wrong: [n * k, c + n],
+    why: 'Choosing without order: divide the ordered count by the ways to order the chosen ones.', how: [`In order: ${Array.from({length: k}, (_, i) => n - i).join(' × ')} = ${p}.`, `Each group was counted ${k}! = ${k === 2 ? 2 : 6} times.`, `${p} ÷ ${k === 2 ? 2 : 6} = ${c}.`]};
+});
+fam('a-linear', 'apt', 2, 'Quant', 'ages', null, r => {
+  const x = ri(r, 3, 25), a = ri(r, 2, 5), b = (a - 1) * x;
+  return {q: `A number plus ${b} equals ${a} times the number. What is the number?`, ans: x, trap: b / a % 1 ? Math.round(b / a) : b / a === x ? x + 1 : b / a, wrong: [b, x + a],
+    why: 'Write it as an equation and solve.', how: [`x + ${b} = ${a}x.`, `${b} = ${a - 1}x.`, `x = ${x}.`]};
+});
+fam('a-speed-twice', 'apt', 3, 'Quant', 'work', null, r => {
+  const k = pk(r, [2, 3]), T = pk(r, [4, 6, 8, 10, 12]), slow = T * (k + 1), fast = slow / k; if (fast % 1) return null;
+  const [A, B] = pkN(r, NAMES, 2);
+  return {q: `${A} works ${k} times as fast as ${B}. Together they finish a job in ${T} days. How long would ${A} take alone?`, ans: `${fast} days`, trap: `${T * 2} days`, wrong: [`${slow} days`, `${T * k} days`],
+    why: `Together they work at ${k + 1} "${B}-units" per day.`, how: [`If ${B} does 1 unit a day, ${A} does ${k}. Together: ${k + 1} units a day.`, `The job is ${T} × ${k + 1} = ${T * (k + 1)} units.`, `${A} alone: ${T * (k + 1)} ÷ ${k} = ${fast} days.`]};
+});
+fam('a-exam', 'apt', 3, 'Quant', 'reverse-pct', null, r => {
+  const T = pk(r, [200, 300, 400, 500, 600]), pass = pk(r, [35, 40, 50]), need = T * pass / 100, F = ri(r, 5, 30), S = need - F; if (S <= 0) return null;
+  return {q: `To pass, you need ${pass}% of the total marks. A student scored ${S} and failed by ${F} marks. What are the total marks?`, ans: T, trap: Math.round(S / (pass / 100)), wrong: [need, T + 100],
+    why: 'The pass mark is score + shortfall.', how: [`Pass mark = ${S} + ${F} = ${need}.`, `${need} is ${pass}% of the total: ${need} ÷ ${pass / 100} = ${T}.`]};
+});
+
+addStatic('ap', 'apt', 2, 'Verbal', 'analogy', [
+  {q: 'Doctor is to hospital as teacher is to…', a: 'School', w: ['Student', 'Book', 'Lesson'], why: 'Where each person works.'},
+  {q: 'Bird is to nest as bee is to…', a: 'Hive', w: ['Honey', 'Flower', 'Sting'], why: 'Each animal\'s home.'},
+  {q: 'Pen is to write as knife is to…', a: 'Cut', w: ['Sharp', 'Kitchen', 'Fork'], why: 'Tool and what it does.'},
+  {q: 'Puppy is to dog as kitten is to…', a: 'Cat', w: ['Mouse', 'Cub', 'Fur'], why: 'Young animal and adult.'},
+  {q: 'Hot is to cold as tall is to…', a: 'Short', w: ['High', 'Big', 'Long'], why: 'Opposites.'},
+  {q: 'Page is to book as brick is to…', a: 'Wall', w: ['Clay', 'House', 'Cement'], trap: 'House', why: 'A part that makes up the whole directly.'},
+  {q: 'Thermometer is to temperature as scale is to…', a: 'Weight', w: ['Fish', 'Music', 'Height'], why: 'Instrument and what it measures.'},
+  {q: 'Author is to novel as composer is to…', a: 'Symphony', w: ['Piano', 'Orchestra', 'Conductor'], why: 'Creator and what they create.'},
+  {q: 'Water is to thirst as food is to…', a: 'Hunger', w: ['Eat', 'Cook', 'Taste'], why: 'What satisfies a need.'},
+  {q: 'Eye is to see as ear is to…', a: 'Hear', w: ['Sound', 'Listen to music', 'Head'], why: 'Body part and its function.'},
+  {q: 'Cow is to herd as wolf is to…', a: 'Pack', w: ['Flock', 'School', 'Den'], trap: 'Flock', why: 'Group names: a herd of cows, a pack of wolves.'},
+  {q: 'Gloves are to hands as boots are to…', a: 'Feet', w: ['Legs', 'Socks', 'Shoes'], why: 'Clothing and the body part it covers.'},
+]);
+
+// ── Business & product ──
+fam('b-cac', 'biz', 1, 'Unit economics', 'cac', [['Instagram ads', 'customers'], ['a trade-show booth', 'clients'], ['influencer posts', 'paying users'], ['a sales hire', 'accounts'], ['Google ads', 'signups who paid']], (r, [channel, who]) => {
+  const N = pk(r, [20, 40, 50, 80, 100, 200, 250]), cac = pk(r, [5, 10, 20, 25, 40, 50, 80]), M = N * cac;
+  return {q: `You spent ${usd(M)} on ${channel} and got ${N} new ${who}. What's your customer acquisition cost (CAC)?`, ans: usd(cac), trap: usd(cac / 2), wrong: [usd(cac * 2), usd(cac + 5)],
+    why: 'CAC = spend ÷ customers acquired.', how: ['CAC = money spent ÷ customers gained.', `${usd(M)} ÷ ${N} = ${usd(cac)}.`]};
+});
+fam('b-roas', 'biz', 1, 'Metrics', 'cac', ['Meta ads', 'Google ads', 'TikTok ads', 'a podcast sponsorship'], (r, ch) => {
+  const S = pk(r, [1000, 2000, 5000, 10000]), k = pk(r, [1.5, 2, 2.5, 3, 4, 0.8]), R = S * k;
+  return {q: `${cap(ch)} cost ${usd(S)} and brought in ${usd(R)} in sales. What's the return on ad spend (ROAS)?`, ans: `${fmt(k)}×`, trap: `${fmt(Math.round((R - S) / S * 100))}%`, wrong: [`${fmt(Math.round(S / R * 100) / 100)}×`, `${fmt(k + 1)}×`],
+    why: 'ROAS = revenue ÷ ad spend.', how: ['ROAS = revenue from ads ÷ ad spend.', `${usd(R)} ÷ ${usd(S)} = ${fmt(k)}×.`, k < 1 ? 'Below 1× means the ads lost money even before other costs.' : `Every $1 of ads brought back ${m2(k)} in sales (not profit).`]};
+});
+fam('b-breakeven', 'biz', 2, 'Unit economics', 'break-even', [['café', 'coffees', 'month'], ['t-shirt brand', 't-shirts', 'month'], ['bakery', 'cakes', 'month'], ['app', 'subscriptions', 'month'], ['food truck', 'meals', 'week']], (r, [biz, unit, per]) => {
+  const p = pk(r, [5, 8, 10, 20, 25, 40]), v = Math.round(p * pk(r, [0.2, 0.25, 0.4, 0.5, 0.6]) * 100) / 100, cm = p - v, units = pk(r, [200, 300, 400, 500, 800, 1000]), F = Math.round(cm * units);
+  if (Math.abs(F / cm - units) > 0.001) return null;
+  return {q: `A ${biz} has fixed costs of ${usd(F)} a ${per}. Each of its ${unit} sells for ${m2(p)} and costs ${m2(v)} to make. How many must it sell to break even?`, ans: fmt(units), trap: fmt(Math.ceil(F / p)), wrong: [fmt(Math.ceil(F / v)), fmt(units * 2)],
+    why: 'Each sale only covers fixed costs with what\'s left after its own cost.', how: [`Contribution per sale: ${m2(p)} − ${m2(v)} = ${m2(cm)}.`, `${usd(F)} ÷ ${m2(cm)} = ${fmt(units)}.`, 'Dividing by the full price forgets the cost of making each one.']};
+});
+fam('b-markup', 'biz', 2, 'Finance', 'markup', ['shoes', 'mugs', 'headphones', 'notebooks'], (r, item) => {
+  const C = pk(r, [20, 40, 50, 60, 80]), [mk, mg] = pk(r, [[25, 20], [50, 33.3], [100, 50], [20, 16.7], [60, 37.5]]), S = C * (1 + mk / 100), askMargin = r() < 0.5;
+  if (S % 1) return null;
+  return askMargin ? {q: `A shop buys ${item} for ${usd(C)} and sells them for ${usd(S)}. What's the profit margin?`, ans: `${fmt(mg)}%`, trap: `${mk}%`, wrong: [`${fmt(mg + 10)}%`, `${fmt(100 - mg)}%`], why: 'Margin divides profit by the selling price.', how: [`Profit: ${usd(S)} − ${usd(C)} = ${usd(S - C)}.`, `Margin = ${fmt(S - C)} ÷ ${fmt(S)} = ${fmt(mg)}%.`, `${mk}% is the markup (profit ÷ cost).`]}
+    : {q: `A shop buys ${item} for ${usd(C)} and sells them for ${usd(S)}. What's the markup?`, ans: `${mk}%`, trap: `${fmt(mg)}%`, wrong: [`${mk + 10}%`, `${fmt(S - C)}%` === `${mk}%` ? `${mk * 2}%` : `${fmt(S - C)}%`], why: 'Markup divides profit by cost.', how: [`Profit: ${usd(S)} − ${usd(C)} = ${usd(S - C)}.`, `Markup = ${fmt(S - C)} ÷ ${fmt(C)} = ${mk}%.`, `${fmt(mg)}% would be the margin (profit ÷ price).`]};
+});
+fam('b-ctr', 'biz', 1, 'Metrics', 'ctr', [['An ad', 'impressions', 'clicks', 'click-through rate'], ['An email', 'deliveries', 'opens', 'open rate'], ['A landing page', 'visits', 'signups', 'signup rate'], ['A push notification', 'sends', 'taps', 'tap rate']], (r, [what, base, act, rate]) => {
+  const B = pk(r, [2000, 5000, 8000, 10000, 20000, 50000]), p = pk(r, [0.5, 1, 2, 2.5, 4, 5, 8, 12]), A = B * p / 100; if (A % 1) return null;
+  return {q: `${what} got ${fmt(B)} ${base} and ${fmt(A)} ${act}. What's the ${rate}?`, ans: `${fmt(p)}%`, trap: `${fmt(Math.round(B / A))}%`, wrong: [`${fmt(p * 10)}%`, `${fmt(p / 10)}%`],
+    why: `${cap(rate)} = ${act} ÷ ${base}.`, how: [`${fmt(A)} ÷ ${fmt(B)} = ${fmt(p / 100)}.`, `= ${fmt(p)}%.`]};
+});
+fam('b-nps', 'biz', 3, 'Metrics', 'retention', null, r => {
+  const N = pk(r, [100, 200, 400, 500]), P = pk(r, [30, 40, 50, 60]), D = pk(r, [10, 15, 20, 25, 30]); if (P + D > 90) return null;
+  const pas = 100 - P - D;
+  return {q: `${N} customers answer "How likely are you to recommend us?" ${P}% are promoters (9–10), ${pas}% passives (7–8), ${D}% detractors (0–6). What's the NPS?`, ans: `${P - D}`, trap: `${P}`, wrong: [`${P + pas - D}`, `${P - D + pas}` === `${P + pas - D}` ? `${P + D}` : `${P - D + pas}`],
+    why: 'NPS = % promoters − % detractors. Passives don\'t count.', how: ['NPS = promoters % − detractors %.', `${P} − ${D} = ${P - D}.`, 'Passives are left out, and it\'s a number from −100 to 100, not a percentage.']};
+});
+fam('b-mrr', 'biz', 1, 'Metrics', 'mrr', [['a SaaS tool', 'customers'], ['a gym', 'members'], ['a newsletter', 'paid readers'], ['a meal-kit service', 'subscribers']], (r, [biz, who]) => {
+  const n = pk(r, [50, 120, 200, 300, 450, 800]), p = pk(r, [5, 9, 10, 15, 20, 29, 49]), M = n * p, askArr = r() < 0.5;
+  return askArr ? {q: `${cap(biz)} has ${n} ${who} paying ${usd(p)} a month. What's its annual recurring revenue (ARR)?`, ans: usd(M * 12), trap: usd(M), wrong: [usd(M * 52), usd(n * 12)], why: 'ARR = MRR × 12.', how: [`MRR: ${n} × ${usd(p)} = ${usd(M)}.`, `ARR: ${usd(M)} × 12 = ${usd(M * 12)}.`]}
+    : {q: `${cap(biz)} has ${n} ${who} paying ${usd(p)} a month. What's its monthly recurring revenue (MRR)?`, ans: usd(M), trap: usd(M * 12), wrong: [usd(n + p), usd(M / 2)], why: 'MRR = paying customers × monthly price.', how: ['MRR = customers × monthly price.', `${n} × ${usd(p)} = ${usd(M)}.`]};
+});
+fam('b-lifetime', 'biz', 2, 'Metrics', 'retention', [['customers', 'monthly'], ['subscribers', 'monthly'], ['members', 'monthly']], (r, [who]) => {
+  const c = pk(r, [2, 4, 5, 8, 10, 20, 25]);
+  return {q: `If ${c}% of ${who} cancel every month, roughly how long does the average one stay?`, ans: `${fmt(100 / c)} months`, trap: `${fmt(100 - c)} months`, wrong: [`${c} months`, `${fmt(100 / c * 2)} months`],
+    why: 'Average lifetime ≈ 1 ÷ churn rate.', how: ['Average lifetime ≈ 1 ÷ monthly churn.', `1 ÷ ${c / 100} = ${fmt(100 / c)} months.`]};
+});
+fam('b-price-cut', 'biz', 4, 'Pricing', 'elasticity', null, r => {
+  const m = pk(r, [40, 50, 60]), cut = pk(r, [10, 20]), before = m, after = m - cut, need = before / after; if (after <= 0) return null;
+  const pctMore = Math.round((need - 1) * 100);
+  return {q: `Your product has a ${m}% profit margin. You cut the price ${cut}%. Roughly how much more must you sell to keep the same profit?`, ans: `${pctMore}% more`, trap: `${cut}% more`, wrong: [`${cut * 2}% more`, `${Math.round(pctMore / 2)}% more`],
+    why: 'A price cut comes straight out of your margin.', how: [`Per $100 of price, profit was $${m}.`, `After the cut: price $${100 - cut}, cost still $${100 - m}, profit $${after}.`, `To earn $${m} again: ${m} ÷ ${after} = ${fmt(Math.round(need * 100) / 100)}× the units, about ${pctMore}% more.`]};
+});
+fam('b-funnel3', 'biz', 2, 'Funnels', 'conversion', [['visit → signup → trial → paid'], ['view → add to cart → checkout → order'], ['download → open → sign in → subscribe']], (r, [steps]) => {
+  const rates = [pk(r, [20, 25, 40, 50]), pk(r, [20, 25, 40, 50]), pk(r, [10, 20, 25, 50])], overall = rates.reduce((a, b) => a * b / 100, 100);
+  return {q: `A funnel goes ${steps}. Step conversion rates are ${rates.join('%, ')}%. What share of people at the top reach the end?`, ans: pct1(overall), trap: `${Math.min(...rates)}%`, wrong: [pct1(rates.reduce((a, b) => a + b, 0) / 3), pct1(overall * 10)],
+    why: 'Funnel steps multiply.', how: [`${rates.map(x => x / 100).join(' × ')} = ${fmt(overall / 100)}.`, `= ${pct1(overall)}.`, 'The weakest step alone overstates it.']};
+});
+fam('b-tam', 'biz', 2, 'Strategy', 'fermi', [['dentists in a country', 'practice-management software'], ['coffee shops in a city', 'a loyalty app'], ['schools in a region', 'an attendance tool'], ['gyms in a country', 'a booking system']], (r, [who, product]) => {
+  const n = pk(r, [2000, 5000, 10000, 40000, 50000]), p = pk(r, [300, 600, 1200, 2400]), T = n * p;
+  return {q: `There are ${fmt(n)} ${who}. Each would pay ${usd(p)} a year for ${product}. What's the total addressable market?`, ans: usd(T), trap: usd(T / 12), wrong: [usd(T * 12), usd(n + p)],
+    why: 'TAM = potential customers × annual price.', how: [`${fmt(n)} × ${usd(p)} a year.`, `= ${usd(T)} a year.`, 'That\'s the ceiling if every single one bought, not a forecast.']};
+});
+fam('b-runway', 'biz', 1, 'Finance', 'runway', [['A startup', 'burns'], ['A café', 'loses'], ['An agency', 'burns'], ['A charity project', 'spends']], (r, [who, verb]) => {
+  const B = pk(r, [10000, 20000, 25000, 40000, 50000]), m = pk(r, [6, 8, 10, 12, 15, 18, 24]), C = B * m;
+  return {q: `${who} has ${usd(C)} in the bank and ${verb} ${usd(B)} a month. How many months of runway?`, ans: `${m} months`, trap: `${fmt(Math.round(C / B / 12 * 10) / 10)} months`, wrong: [`${m * 2} months`, `${m - 2} months`],
+    why: 'Runway = cash ÷ monthly burn.', how: ['Runway = cash ÷ monthly burn.', `${usd(C)} ÷ ${usd(B)} = ${m} months.`]};
+});
+fam('b-contribution', 'biz', 3, 'Unit economics', 'unit-econ', [['food delivery order', 'delivery'], ['online clothing order', 'shipping'], ['grocery order', 'delivery']], (r, [order, ship]) => {
+  const P = pk(r, [20, 30, 40, 50, 60]), cogs = Math.round(P * pk(r, [0.4, 0.5, 0.6])), d = pk(r, [3, 4, 5, 6, 8]), fee = pk(r, [2, 3]), feeAmt = P * fee / 100, ans = P - cogs - d - feeAmt;
+  return {q: `A ${order} is ${usd(P)}. Products cost ${usd(cogs)}, ${ship} costs ${usd(d)}, and card fees are ${fee}% of the order. Contribution per order?`, ans: m2(ans), trap: m2(P - cogs), wrong: [m2(P - cogs - d), m2(ans - fee)],
+    why: 'Take every per-order cost off the price.', how: [`Card fee: ${fee}% of ${usd(P)} = ${m2(feeAmt)}.`, `${usd(P)} − ${usd(cogs)} − ${usd(d)} − ${m2(feeAmt)}.`, `= ${m2(ans)}.`]};
+});
+fam('b-annual-plan', 'biz', 2, 'Pricing', 'pct', [['A SaaS tool', 'month'], ['A gym', 'month'], ['A streaming service', 'month'], ['A language app', 'month']], (r, [what]) => {
+  const p = pk(r, [5, 8, 10, 12, 15, 20, 25]), d = pk(r, [10, 15, 20, 25, 30]), Y = p * 12 * (1 - d / 100); if (Y % 1) return null;
+  return {q: `${what} costs ${usd(p)} a month or ${usd(Y)} a year. What's the annual discount?`, ans: `${d}%`, trap: `${fmt(Math.round((p * 12 - Y) / Y * 1000) / 10)}%`, wrong: [`${d + 10}%`, `${fmt(p * 12 - Y)}%` === `${d}%` ? `${d * 2}%` : `${fmt(p * 12 - Y)}%`],
+    why: 'Compare the yearly price with 12 monthly payments.', how: [`12 × ${usd(p)} = ${usd(p * 12)}.`, `Saving: ${usd(p * 12 - Y)}.`, `${fmt(p * 12 - Y)} ÷ ${fmt(p * 12)} = ${d}%.`]};
+});
+fam('b-lift', 'biz', 2, 'Experiments', 'lift', [['Checkout conversion', 'checkout'], ['Signup rate', 'signup page'], ['Email click rate', 'email'], ['Trial-to-paid rate', 'onboarding']], (r, [metric, thing]) => {
+  const [a, b] = pk(r, [[2, 3], [4, 5], [10, 12], [5, 6], [20, 25], [8, 10]]);
+  return {q: `A new ${thing} moved ${metric.toLowerCase()} from ${a}% to ${b}%. What's the relative lift?`, ans: pct1((b - a) / a * 100), trap: `${b - a}%`, wrong: [pct1((b - a) / b * 100), pct1((b - a) / a * 200)],
+    why: 'Relative lift = change ÷ the original rate.', how: [`Change: ${b - a} percentage point${b - a > 1 ? 's' : ''}.`, `${b - a} ÷ ${a} = ${fmt((b - a) / a)}.`, `= ${pct1((b - a) / a * 100)} lift.`]};
+});
+fam('b-rice2', 'biz', 3, 'Prioritization', 'prioritization', null, r => {
+  const mk = () => ({R: pk(r, [500, 1000, 2000, 5000]), I: pk(r, [0.5, 1, 2, 3]), C: pk(r, [50, 80, 100]), E: pk(r, [1, 2, 4, 8])});
+  let a, b, sa, sb; do { a = mk(); b = mk(); sa = a.R * a.I * a.C / 100 / a.E; sb = b.R * b.I * b.C / 100 / b.E; } while (sa === sb);
+  const win = sa > sb ? 'Feature A' : 'Feature B', naive = a.R * a.I > b.R * b.I ? 'Feature A' : 'Feature B';
+  const d = x => `reach ${fmt(x.R)}, impact ${x.I}, confidence ${x.C}%, effort ${x.E}`;
+  return {q: `Using RICE (Reach × Impact × Confidence ÷ Effort): Feature A has ${d(a)}. Feature B has ${d(b)}. Which scores higher?`, ans: win, trap: win === naive ? 'They tie' : naive, wrong: ['They tie', 'Can\'t compare without revenue'],
+    why: 'Effort divides the score, so cheap features can win.', how: [`A: ${fmt(a.R)} × ${a.I} × ${a.C / 100} ÷ ${a.E} = ${fmt(sa)}.`, `B: ${fmt(b.R)} × ${b.I} × ${b.C / 100} ÷ ${b.E} = ${fmt(sb)}.`, `${win} wins.`]};
+});
+fam('b-sales', 'biz', 2, 'Ops', 'unit-econ', null, r => {
+  const n = ri(r, 2, 6), rev = pk(r, [8000, 10000, 12000, 15000]), cost = pk(r, [5000, 6000, 7000, 9000]); if (cost >= rev) return null;
+  return {q: `Each salesperson brings in ${usd(rev)} of gross profit a month and costs ${usd(cost)}. You hire ${n}. How much extra profit a month?`, ans: usd(n * (rev - cost)), trap: usd(n * rev), wrong: [usd(rev - cost), usd(n * cost)],
+    why: 'Net each hire, then multiply.', how: [`Each: ${usd(rev)} − ${usd(cost)} = ${usd(rev - cost)}.`, `× ${n} = ${usd(n * (rev - cost))}.`]};
+});
+fam('b-payback-margin', 'biz', 3, 'Unit economics', 'unit-econ', null, r => {
+  const p = pk(r, [20, 25, 40, 50, 100]), mg = pk(r, [50, 60, 80]), m = ri(r, 3, 12), gp = p * mg / 100, cac = gp * m;
+  return {q: `A ${usd(p)}/month plan has ${mg === 80 ? 'an' : 'a'} ${mg}% gross margin. CAC is ${usd(cac)}. How many months to pay back CAC from gross profit?`, ans: `${m} months`, trap: `${fmt(Math.round(cac / p * 10) / 10)} months`, wrong: [`${m * 2} months`, `${m + 3} months`],
+    why: 'Payback should use profit, not revenue.', how: [`Gross profit per month: ${usd(p)} × ${mg}% = ${usd(gp)}.`, `${usd(cac)} ÷ ${usd(gp)} = ${m} months.`, 'Dividing by revenue makes payback look faster than it is.']};
+});
+
+addStatic('bz', 'biz', 2, 'Product', 'product-sense', [
+  {q: 'What is a "north star metric"?', a: 'The one number that best captures the value customers get', w: ['Total revenue for the year', 'The CEO\'s favourite KPI', 'A vanity metric for investors'], why: 'It aligns the team on the value users actually receive.'},
+  {q: 'Product-market fit is best shown by…', a: 'Users who keep coming back and would be very disappointed without it', w: ['A big launch on social media', 'Lots of signups in week one', 'Positive press coverage'], trap: 'Lots of signups in week one', why: 'Retention and pull from users signal fit; launch spikes don\'t.'},
+  {q: 'Which is a vanity metric?', a: 'Total registered users all-time', w: ['Weekly active users', 'Paid conversion rate', 'Net revenue retention'], why: 'All-time totals only go up and say little about health.'},
+  {q: 'In "jobs to be done", people buy a product to…', a: 'Make progress on something in their life', w: ['Get the most features', 'Follow a trend', 'Save the most money'], why: 'Customers "hire" products for a job.'},
+  {q: 'An OKR is…', a: 'An objective plus measurable key results', w: ['A list of tasks for the quarter', 'A performance review score', 'A type of roadmap tool'], why: 'Objective = where you want to go; key results = how you\'ll know.'},
+  {q: 'Why run an A/B test instead of comparing this month with last month?', a: 'To separate the change\'s effect from everything else that changed', w: ['A/B tests are always faster', 'Monthly data is illegal to use', 'It needs fewer users'], why: 'Random assignment controls for seasonality and other changes.'},
+  {q: 'Your feature has great usage but customers still churn. First move?', a: 'Talk to churned customers to learn why they left', w: ['Add more features', 'Cut the price', 'Run more ads'], why: 'Diagnose before you build.'},
+  {q: 'What does "cohort retention" track?', a: 'How a group that started together keeps using the product over time', w: ['Total users each month', 'Revenue per employee', 'New signups per channel'], why: 'Cohorts stop new signups hiding falling retention.'},
+  {q: 'A metric jumped 40% overnight. Most likely first step?', a: 'Check for a tracking or data change', w: ['Celebrate with the team', 'Raise prices', 'Hire more staff'], why: 'Sudden jumps are often instrumentation, not reality.'},
+  {q: 'What is "scope creep"?', a: 'A project slowly growing beyond what was agreed', w: ['Shipping too early', 'A slow code review', 'Users ignoring a feature'], why: 'Small additions pile up and delay delivery.'},
+  {q: 'The 80/20 rule suggests that…', a: 'A small share of causes often drives most of the results', w: ['80% of projects fail', 'You should work 80% of the time', '20% profit margin is ideal'], why: 'Pareto: effort and outcomes aren\'t evenly spread.'},
+  {q: 'Which is a leading indicator of revenue for a SaaS?', a: 'Trial activation rate', w: ['Last quarter\'s revenue', 'Annual report profit', 'Total funding raised'], why: 'Leading indicators move before revenue does.'},
+  {q: 'A stakeholder asks for a feature "because a competitor has it". Best response?', a: 'Ask what customer problem it solves and how big it is', w: ['Build it immediately', 'Refuse outright', 'Copy their design exactly'], why: 'Tie requests to customer problems, not competitor checklists.'},
+  {q: 'What is the main purpose of an MVP?', a: 'To learn whether the idea works with the least effort', w: ['To impress investors with polish', 'To launch every planned feature', 'To lock in the final design'], why: 'MVPs are learning tools.'},
+  {q: 'Survivorship bias in startup advice means…', a: 'Copying winners while ignoring the many who did the same and failed', w: ['Only old startups survive', 'Advice from failures is useless', 'Survivors are always right'], why: 'You rarely hear from the ones who failed doing the same thing.'},
+]);
+
+// ── Street smarts ──
+fam('s-was-now', 'street', 1, 'Money', 'percent-change', ['sneakers', 'a TV', 'a sofa', 'headphones', 'a jacket', 'a phone case'], (r, item) => {
+  const was = pk(r, [40, 50, 80, 100, 120, 200, 250, 400]), off = pk(r, [10, 20, 25, 30, 40, 50]), now = was * (100 - off) / 100; if (now % 1) return null;
+  return {q: `${cap(item)}: "Was ${usd(was)}, now ${usd(now)}". What % off is that?`, ans: `${off}%`, trap: pct1((was - now) / now * 100), wrong: [`${fmt(was - now)}%` === `${off}%` ? `${off + 15}%` : `${fmt(was - now)}%`, `${off + 10}%`],
+    why: 'Discount % compares the saving with the original price.', how: [`Saving: ${usd(was)} − ${usd(now)} = ${usd(was - now)}.`, `${fmt(was - now)} ÷ ${fmt(was)} = ${off}%.`, 'Dividing by the new price inflates it.']};
+});
+fam('s-bogo', 'street', 2, 'Money', 'deals', [['Buy 2, get 1 free', 2, 1], ['Buy 1, get 1 free', 1, 1], ['Buy 3, get 1 free', 3, 1], ['Buy 1, get the second half price', 1, 0.5]], (r, [deal, pay, free]) => {
+  const total = pay + (free === 0.5 ? 1 : free), paid = pay + (free === 0.5 ? 0.5 : 0), off = (1 - paid / total) * 100;
+  return {q: `"${deal}" works out to what discount per item?`, ans: pct1(off), trap: free === 0.5 ? '50%' : pct1(free / pay * 100), wrong: [pct1(off + 10), pct1(off / 2)],
+    why: 'Compare what you pay with how many items you get.', how: [`You get ${total} items and pay for ${fmt(paid)}.`, `You pay ${fmt(paid)}/${total} = ${pct1(paid / total * 100)} of full price.`, `That's ${pct1(off)} off each item.`]};
+});
+fam('s-split', 'street', 1, 'Money', 'pct', [['dinner', 'tip'], ['a cab ride', 'tip'], ['a group gift', 'delivery fee']], (r, [what, add]) => {
+  const n = ri(r, 3, 8), B = n * pk(r, [10, 15, 20, 25, 30]), t = pk(r, [10, 20]), tot = B * (1 + t / 100), each = tot / n;
+  return {q: `${cap(what)} costs ${usd(B)} plus a ${t}% ${add}, split evenly between ${n} people. How much each?`, ans: m2(each), trap: m2(B / n), wrong: [m2(B / n + t), m2(each + 2)],
+    why: 'Add the extra first, then split.', how: [`${t}% of ${usd(B)} = ${usd(B * t / 100)}.`, `Total: ${usd(tot)}.`, `÷ ${n} = ${m2(each)} each.`]};
+});
+fam('s-subs', 'street', 1, 'Money', 'units', null, r => {
+  const n = ri(r, 2, 6), p = pk(r, [5, 8, 10, 12, 15]);
+  return {q: `You pay for ${n} subscriptions at ${usd(p)} a month each. How much is that a year?`, ans: usd(n * p * 12), trap: usd(n * p), wrong: [usd(n * p * 10), usd(p * 12)],
+    why: 'Small monthly costs add up over 12 months.', how: [`Per month: ${n} × ${usd(p)} = ${usd(n * p)}.`, `× 12 = ${usd(n * p * 12)} a year.`]};
+});
+fam('s-weekly', 'street', 2, 'Money', 'unit-price', [['a streaming app', 'week', 'month'], ['a phone plan add-on', 'week', 'month'], ['a coffee subscription', 'week', 'month']], (r, [what]) => {
+  const w = pk(r, [2.99, 3.99, 4.99]), m = pk(r, [12, 14, 15, 16, 19]), wy = w * 52, my = m * 12; if (Math.abs(wy - my) < 5) return null;
+  const ans = wy < my ? `${m2(w)} a week` : `${m2(m)} a month`;
+  return {q: `For ${what}, which is cheaper over a year: ${m2(w)} a week or ${m2(m)} a month?`, ans, trap: ans.includes('week') ? `${m2(m)} a month` : `${m2(w)} a week`, wrong: ['They cost the same', 'Depends on the month'],
+    why: 'Convert both to a yearly cost.', how: [`Weekly: ${m2(w)} × 52 = ${m2(wy)} a year.`, `Monthly: ${m2(m)} × 12 = ${m2(my)} a year.`, `Cheaper: ${ans}. A month is about 4.3 weeks, not 4.`]};
+});
+fam('s-fuel', 'street', 2, 'Money', 'units', null, r => {
+  const D = pk(r, [200, 300, 400, 500, 600]), L = pk(r, [5, 6, 8, 10]), p = pk(r, [1.5, 2, 1.8, 1.2]), litres = D / 100 * L, cost = litres * p;
+  return {q: `A ${D} km road trip in a car that uses ${L} L per 100 km, with fuel at ${m2(p)} a litre. Fuel cost?`, ans: m2(cost), trap: m2(D * L * p / 10), wrong: [m2(litres), m2(cost * 2)],
+    why: 'Work out the litres first, then the cost.', how: [`Litres: ${D} ÷ 100 × ${L} = ${fmt(litres)} L.`, `${fmt(litres)} × ${m2(p)} = ${m2(cost)}.`]};
+});
+fam('s-plans', 'street', 3, 'Money', 'break-even', [['phone plans', 'minutes'], ['gym memberships', 'visits'], ['car-share plans', 'hours']], (r, [what, unit]) => {
+  const base = pk(r, [10, 15, 20]), per = pk(r, [0.1, 0.25, 0.5, 1, 2]), flat = base + per * pk(r, [20, 40, 60, 100, 150]), x = (flat - base) / per;
+  if (x % 1 || flat <= base) return null;
+  return {q: `Two ${what}: A is ${usd(base)} a month plus ${m2(per)} per ${unit.replace(/s$/, '')}. B is ${usd(flat)} a month, unlimited. Above how many ${unit} a month is B cheaper?`, ans: fmt(x), trap: fmt(Math.round(flat / per)), wrong: [fmt(x / 2), fmt(x + 20)],
+    why: 'Find where the two costs are equal.', how: [`A costs ${usd(base)} + ${m2(per)} × n. B costs ${usd(flat)}.`, `Equal when ${m2(per)} × n = ${usd(flat - base)}, so n = ${fmt(x)}.`, `Above ${fmt(x)} ${unit}, B is cheaper.`]};
+});
+fam('s-savings-goal', 'street', 1, 'Money', 'units', [['a laptop', 'save'], ['a holiday', 'put aside'], ['an emergency fund', 'save'], ['a bike', 'save']], (r, [goal, verb]) => {
+  const s = pk(r, [50, 100, 150, 200, 250]), m = ri(r, 4, 24), G = s * m;
+  return {q: `You want ${usd(G)} for ${goal}. You ${verb} ${usd(s)} a month. How many months?`, ans: `${m} months`, trap: `${fmt(Math.round(G / s / 12 * 10) / 10)} months`, wrong: [`${m + 2} months`, `${m * 2} months`],
+    why: 'Goal ÷ monthly saving.', how: [`${usd(G)} ÷ ${usd(s)} = ${m}.`, `${m} months${m >= 12 ? ` (${fmt(Math.round(m / 12 * 10) / 10)} years)` : ''}.`]};
+});
+fam('s-card-interest', 'street', 2, 'Money', 'compounding', null, r => {
+  const B = pk(r, [1000, 2000, 3000, 5000]), apr = pk(r, [18, 20, 24, 30]);
+  return {q: `You owe ${usd(B)} on a credit card at ${apr}% a year and only pay the interest. How much interest do you pay in a year?`, ans: usd(B * apr / 100), trap: usd(B * apr / 1200), wrong: [usd(B * apr / 100 * 2), usd(apr * 12)],
+    why: `${apr}% of the balance, every year, while the debt never shrinks.`, how: [`${apr}% of ${usd(B)} = ${usd(B * apr / 100)}.`, `And you still owe the full ${usd(B)}. That's ${usd(B * apr / 1200)} a month for nothing.`]};
+});
+fam('s-debt-double', 'street', 2, 'Money', 'compounding', ['credit card debt', 'a payday loan', 'an unpaid buy-now-pay-later balance'], (r, debt) => {
+  const rate = pk(r, [12, 18, 24, 36]), yrs = 72 / rate;
+  return {q: `Roughly how long does ${debt} take to double at ${rate}% a year if you pay nothing?`, ans: `~${fmt(yrs)} years`, trap: `~${fmt(Math.round(100 / rate * 10) / 10)} years`, wrong: [`~${fmt(yrs * 2)} years`, `~${rate} years`],
+    why: 'The rule of 72 works for debt too.', how: [`72 ÷ ${rate} = ${fmt(yrs)}.`, `About ${fmt(yrs)} years to double.`]};
+});
+fam('s-inflation', 'street', 3, 'Money', 'inflation', null, r => {
+  const inf = pk(r, [3, 4, 6, 8, 9, 12]), yrs = 72 / inf, amt = pk(r, [100, 1000, 10000]);
+  return {q: `With ${inf}% inflation a year, roughly how long until ${usd(amt)} buys only half as much?`, ans: `~${fmt(yrs)} years`, trap: `~${fmt(Math.round(50 / inf * 10) / 10)} years`, wrong: [`~${fmt(yrs * 2)} years`, `~${inf * 2} years`],
+    why: 'Prices doubling means your money halves. Use the rule of 72.', how: [`Prices double in about 72 ÷ ${inf} = ${fmt(yrs)} years.`, `When prices double, ${usd(amt)} buys half as much.`, `So ~${fmt(yrs)} years. 50 ÷ ${inf} ignores compounding.`]};
+});
+fam('s-cashback', 'street', 2, 'Money', 'deals', null, r => {
+  const P = pk(r, [80, 100, 120, 150, 200, 300]), off = pk(r, [10, 15, 20]), cb = pk(r, [10, 15, 20, 25, 30]), saveA = P * off / 100; if (saveA === cb) return null;
+  const ans = saveA > cb ? `${off}% off` : `${usd(cb)} cashback`;
+  return {q: `On a ${usd(P)} purchase, which saves more: ${off}% off or ${usd(cb)} cashback?`, ans, trap: ans.includes('off') ? `${usd(cb)} cashback` : `${off}% off`, wrong: ['They\'re the same', 'Depends on the store'],
+    why: 'Turn the percentage into dollars first.', how: [`${off}% of ${usd(P)} = ${usd(saveA)}.`, `Cashback = ${usd(cb)}.`, `${ans} saves more.`]};
+});
+fam('s-hourly', 'street', 2, 'Money', 'units', null, r => {
+  const S = pk(r, [31200, 41600, 52000, 62400, 83200]), h = 40, ans = S / 52 / h;
+  return {q: `A job pays ${usd(S)} a year for 40 hours a week, 52 weeks a year. What's that per hour?`, ans: usd(ans), trap: usd(S / 12 / 40), wrong: [usd(S / 365), usd(ans * 2)],
+    why: 'Hours a year = 40 × 52 = 2,080.', how: ['40 × 52 = 2,080 hours a year.', `${usd(S)} ÷ 2,080 = ${usd(ans)} an hour.`]};
+});
+fam('s-commute', 'street', 2, 'Stats', 'units', null, r => {
+  const m = pk(r, [20, 30, 45, 60, 90]), d = pk(r, [4, 5]), w = pk(r, [46, 48]), hrs = 2 * m * d * w / 60;
+  return {q: `A ${m}-minute commute each way, ${d} days a week, ${w} weeks a year. Roughly how many hours a year is that?`, ans: `${fmt(Math.round(hrs))} hours`, trap: `${fmt(Math.round(hrs / 2))} hours`, wrong: [`${fmt(Math.round(hrs * 1.5))} hours`, `${fmt(Math.round(hrs / 5))} hours`],
+    why: 'Count both directions.', how: [`Per day: 2 × ${m} = ${2 * m} minutes.`, `× ${d} days × ${w} weeks = ${fmt(2 * m * d * w)} minutes.`, `÷ 60 = about ${fmt(Math.round(hrs))} hours.`]};
+});
+fam('s-survey', 'street', 2, 'Stats', 'sampling', [['Survey', 'say they prefer brand A'], ['Poll', 'plan to vote yes'], ['Study', 'reported side effects']], (r, [kind, result]) => {
+  const N = pk(r, [200, 500, 1000, 2000]), p = pk(r, [12, 20, 35, 48, 60, 72]), people = N * p / 100;
+  return {q: `${kind}: ${p}% of ${fmt(N)} people ${result}. How many people is that?`, ans: fmt(people), trap: fmt(p), wrong: [fmt(N - people), fmt(people * 10)],
+    why: 'Always turn the percentage back into a headcount.', how: [`${p}% of ${fmt(N)} = ${fmt(N)} × ${p / 100}.`, `= ${fmt(people)} people.`]};
+});
+fam('s-ev-bet', 'street', 4, 'Stats', 'ev', [['a raffle ticket', 'win'], ['a scratch card', 'win'], ['a carnival game', 'win']], (r, [thing, win]) => {
+  const cost = pk(r, [1, 2, 5]), prize = pk(r, [5, 10, 20, 50]), odds = pk(r, [6, 10, 20, 50]), ev = prize / odds - cost;
+  return {q: `${cap(thing)} costs ${usd(cost)}. You ${win} ${usd(prize)} with a 1 in ${odds} chance. What's the expected value per play?`, ans: (ev >= 0 ? '+' : '−') + m2(Math.abs(ev)), trap: '+' + m2(prize - cost), wrong: [(ev >= 0 ? '−' : '+') + m2(Math.abs(ev)), '$0.00'],
+    why: 'Average winnings minus the cost.', how: [`Average winnings: ${usd(prize)} × 1/${odds} = ${m2(prize / odds)}.`, `Minus the ${usd(cost)} cost: ${m2(prize / odds)} − ${usd(cost)}.`, `= ${(ev >= 0 ? '+' : '−') + m2(Math.abs(ev))} per play on average.`]};
+});
+
+addStatic('st', 'street', 1, 'Scam radar', 'scams', [
+  {q: 'A "delivery company" texts: "Your parcel is on hold, pay a $1.99 fee here." You\'re not expecting anything. Best move?', a: 'Delete it, it\'s a scam', w: ['Pay, it\'s only $1.99', 'Reply asking which parcel', 'Click to check the tracking'], trap: 'Pay, it\'s only $1.99', why: 'Tiny fees are bait to steal your card details.'},
+  {q: 'Someone on a dating app you\'ve never met in person asks for money for an emergency. What\'s most likely?', a: 'A romance scam', w: ['A real emergency', 'A test of trust', 'A misunderstanding'], why: 'Asking for money before meeting is the classic sign.'},
+  {q: 'An email from "IT support" asks you to confirm your password to avoid losing your account. What do you do?', a: 'Don\'t reply; report it to your real IT team', w: ['Reply with your password', 'Click the link to check', 'Forward it to colleagues'], why: 'Real IT never asks for your password.'},
+  {q: 'A job offer pays $500/day for "simple tasks", but you must pay $100 for training first. Red flag?', a: 'Paying to get a job', w: ['The high pay is normal', 'Remote work', 'It\'s only $100'], trap: 'It\'s only $100', why: 'Real employers don\'t charge you to start.'},
+  {q: 'A caller says they\'re from your bank and asks you to read out the one-time code they just sent. You should…', a: 'Hang up; never share one-time codes', w: ['Read it so they can verify you', 'Read only the first half', 'Ask them to call back later'], why: 'That code lets them into your account.'},
+  {q: 'A "friend" messages from a new number: "Lost my phone, can you send money urgently?" Best move?', a: 'Call your friend on their old number to check', w: ['Send money quickly', 'Ask a question only they\'d know, then pay', 'Send half now'], why: 'Verify through a channel you already trust.'},
+  {q: 'A pop-up says your computer is infected and shows a phone number to call. What is it?', a: 'A tech-support scam', w: ['A real virus warning', 'A Windows update', 'Your antivirus working'], why: 'Real security software doesn\'t ask you to phone a number.'},
+  {q: 'A crypto "investment" promises to double your money in a week. What\'s most likely?', a: 'A scam', w: ['A smart opportunity', 'Normal for crypto', 'Risky but legit'], trap: 'Normal for crypto', why: 'Guaranteed huge returns are the signature of fraud.'},
+  {q: 'You won a prize in a contest you never entered. To claim it you must pay a processing fee. This is…', a: 'A scam', w: ['Normal paperwork', 'A tax requirement', 'Lucky'], why: 'Real prizes don\'t charge you to collect.'},
+  {q: 'A QR code sticker on a parking meter takes you to a payment page. Safest choice?', a: 'Use the official parking app or the meter itself', w: ['Pay through the QR code', 'Scan it twice to be sure', 'Pay with a debit card instead'], why: 'Fake QR stickers send you to phishing pages.'},
+  {q: 'Which website address is most likely fake for a bank called "Barcley"?', a: 'barcley-secure-login.com', w: ['barcley.com', 'online.barcley.com', 'www.barcley.com'], why: 'Extra words bolted onto the brand name are a common trick.'},
+  {q: 'A seller online only accepts gift cards or wire transfers. That means…', a: 'You likely can\'t get your money back if it\'s a scam', w: ['They\'re a small business', 'It\'s more secure', 'It saves on fees'], why: 'Scammers prefer payments that can\'t be reversed.'},
+  {q: 'A video call shows your CEO asking you to urgently move company money. The face looks right. What should you do?', a: 'Verify through a separate known channel first', w: ['Do it, you saw their face', 'Do it but tell them after', 'Ask them to repeat the request'], why: 'AI can now fake faces and voices on video.'},
+  {q: 'A "government" message says you owe tax and will be arrested today unless you pay. This is most likely…', a: 'A scam', w: ['Urgent and real', 'A reminder letter', 'An automated notice'], why: 'Governments don\'t threaten same-day arrest by text.'},
+  {q: 'You get an invoice for software you never ordered with a "call to cancel" number. Best move?', a: 'Ignore it, or check your accounts directly', w: ['Call the number to cancel', 'Pay to avoid fees', 'Reply with your details'], why: 'Calling connects you to the scammer.'},
+]);
+addStatic('st', 'street', 2, 'Spot the BS', 'sample-size', [
+  {q: '"Our app users are 3× happier!" — based on a survey of the app\'s own users. Biggest problem?', a: 'Unhappy people probably stopped using the app', w: ['3× is too precise', 'Happiness can\'t be measured', 'Apps can\'t run surveys'], k: 'survivorship', why: 'Only the people who stayed got asked.'},
+  {q: '"Cities with more hospitals have more deaths." Best explanation?', a: 'Bigger cities have more of both', w: ['Hospitals cause deaths', 'Death rates attract hospitals', 'It\'s a coincidence'], k: 'correlation', why: 'Population drives both numbers.'},
+  {q: 'A chart\'s y-axis starts at 98 instead of 0, making a 2% change look huge. What\'s the issue?', a: 'A truncated axis exaggerates the change', w: ['Nothing, it\'s zoomed in to help', 'The data is fake', 'It should be a pie chart'], why: 'Always check where the axis starts.'},
+  {q: '"9 out of 10 people who tried our pill felt better within a week." What\'s missing?', a: 'How many would feel better with no pill at all', w: ['The pill\'s colour', 'The price', 'The brand name'], k: 'correlation', why: 'Without a comparison group, you can\'t credit the pill.'},
+  {q: 'A headline says crime "doubled" from 2 incidents to 4 in a small town. Fair summary?', a: 'Technically true but tiny numbers swing a lot', w: ['The town is now dangerous', 'Police stopped working', 'It\'s a lie'], why: 'Small counts make big-sounding percentages.'},
+  {q: 'An online poll on a political site says 90% agree with the site\'s view. Main flaw?', a: 'The people who answered chose themselves', w: ['90% is impossible', 'Online polls are illegal', 'The question was too short'], why: 'Self-selected samples aren\'t representative.'},
+  {q: '"People who eat breakfast earn more." Should you start eating breakfast to get rich?', a: 'No, it may just reflect lifestyle or job type', w: ['Yes, the link is proven', 'Yes, but only eggs', 'No, breakfast is unhealthy'], k: 'correlation', why: 'Correlation, not causation.'},
+  {q: 'A study funded by a soda company finds soda is fine for you. What should you do?', a: 'Look for independent studies too', w: ['Ignore it completely', 'Trust it, it\'s a study', 'Drink more soda'], why: 'Funding doesn\'t make it wrong, but check independent sources.'},
+]);
+
+// ── Coding ──
+// Facts below are fixed language behaviour; numbers are randomised where the behaviour depends on them.
+fam('c-falsy', 'code', 2, 'JavaScript', 'falsy', ['falsy', 'truthy'], (r, want) => {
+  const falsy = ['0', '""', 'null', 'undefined', 'NaN', 'false', '-0'], truthy = ['"0"', '[]', '{}', '"false"', '" "', '-1', 'Infinity', '"null"'];
+  const right = pk(r, want === 'falsy' ? falsy : truthy), others = pkN(r, want === 'falsy' ? truthy : falsy, 3);
+  return {q: `In JavaScript, which value is ${want}?`, ans: right, trap: want === 'falsy' ? others[0] : others[0], wrong: others.slice(1),
+    why: 'JS falsy values: false, 0, -0, "", null, undefined, NaN. Everything else is truthy.', how: ['The only falsy values are false, 0, -0, "", null, undefined and NaN.', `${right} is ${want}.`, want === 'truthy' ? 'Empty arrays, empty objects and the string "0" are all truthy.' : 'A string like "0" or "false" is non-empty, so it\'s truthy.']};
+});
+fam('c-pyfalsy', 'code', 2, 'Python', 'falsy', ['falsy', 'truthy'], (r, want) => {
+  const falsy = ['0', '""', 'None', '[]', '{}', '0.0', 'set()', 'False'], truthy = ['"0"', '[0]', '"False"', '" "', '-1', '(0,)', '{"a": 0}', '0.1'];
+  const right = pk(r, want === 'falsy' ? falsy : truthy), others = pkN(r, want === 'falsy' ? truthy : falsy, 3);
+  return {q: `In Python, which value is ${want}?`, ans: right, wrong: others,
+    why: 'Python treats zero, None, False and empty containers as falsy.', how: ['Falsy in Python: None, False, zero numbers, and empty strings/lists/dicts/sets/tuples.', `${right} is ${want}.`, 'A container holding a falsy value (like [0]) is not empty, so it\'s truthy.']};
+});
+fam('c-eq', 'code', 2, 'JavaScript', 'equality', null, r => {
+  const facts = [['0 == "0"', 'true'], ['0 === "0"', 'false'], ['null == undefined', 'true'], ['null === undefined', 'false'], ['NaN === NaN', 'false'], ['"" == 0', 'true'], ['[] == false', 'true'], ['"1" == 1', 'true'], ['"b" > "a"', 'true'], ['"10" < "9"', 'true'], ['null == 0', 'false'], ['undefined == 0', 'false']];
+  const [expr, val] = pk(r, facts);
+  return {q: `In JavaScript, what does <code>${expr}</code> evaluate to?`, ans: val, trap: val === 'true' ? 'false' : 'true', wrong: ['TypeError', 'undefined'],
+    why: '== converts types before comparing; === compares type and value.', how: [expr.includes('NaN') ? 'NaN is not equal to anything, including itself.' : expr.includes('===') ? '=== never converts types: different types are always false.' : /[<>]/.test(expr) ? 'Two strings compare character by character, like a dictionary: "1" comes before "9".' : /null|undefined/.test(expr) ? 'With ==, null and undefined only equal each other (and themselves), never 0.' : '== converts both sides to a common type (usually a number) before comparing.', `So ${expr} is ${val}.`]};
+});
+fam('c-slice', 'code', 2, 'Python', 'slicing', ['slice', 'negative', 'step', 'reverse'], (r, kind) => {
+  const n = ri(r, 5, 8), arr = Array.from({length: n}, (_, i) => (i + 1) * pk(r, [1, 10])); const A = arr.join(', ');
+  const show = a => '[' + a.join(', ') + ']';
+  if (kind === 'slice') { const i = ri(r, 0, 2), j = ri(r, i + 2, n - 1); return {q: 'What does this print?', code: `a = [${A}]\nprint(a[${i}:${j}])`, ans: show(arr.slice(i, j)), trap: show(arr.slice(i, j + 1)), wrong: [show(arr.slice(i + 1, j + 1)), show(arr.slice(i + 1, j))], why: 'a[i:j] starts at index i and stops before j.', how: [`Indexes start at 0: a[${i}] = ${arr[i]}.`, `Stop before index ${j} (${arr[j]} is excluded).`, `Result: ${show(arr.slice(i, j))}.`]}; }
+  if (kind === 'negative') { const k = ri(r, 1, 3); return {q: 'What does this print?', code: `a = [${A}]\nprint(a[-${k}])`, ans: String(arr[n - k]), trap: String(arr[n - k - 1]), wrong: [String(arr[k - 1]), 'IndexError'], why: 'Negative indexes count from the end; -1 is the last item.', how: ['-1 is the last item, -2 the one before it…', `a[-${k}] = ${arr[n - k]}.`]}; }
+  if (kind === 'step') { const s = pk(r, [2, 3]); return {q: 'What does this print?', code: `a = [${A}]\nprint(a[::${s}])`, ans: show(arr.filter((_, i) => i % s === 0)), trap: show(arr.filter((_, i) => i % s === s - 1)), wrong: [show(arr.slice(0, s)), show(arr.filter((_, i) => i % s !== 0))], why: `[::${s}] takes every ${s === 2 ? '2nd' : '3rd'} item starting at index 0.`, how: [`Start at index 0, then jump ${s} each time.`, `Indexes ${arr.map((_, i) => i).filter(i => i % s === 0).join(', ')}.`, `Result: ${show(arr.filter((_, i) => i % s === 0))}.`]}; }
+  return {q: 'What does this print?', code: `a = [${A}]\nprint(a[::-1])`, ans: show(arr.slice().reverse()), trap: show(arr), wrong: [show([arr[n - 1]]), show(arr.slice(0, -1))], why: 'A step of -1 walks the list backwards.', how: ['[::-1] means: whole list, step -1.', `Result: ${show(arr.slice().reverse())}.`]};
+});
+fam('c-strings', 'code', 1, 'Python', 'python-basics', ['upper', 'len', 'split', 'reverse', 'repeat', 'find'], (r, kind) => {
+  const w = pk(r, ['hello', 'python', 'banana', 'data', 'stack', 'cloud', 'pixel']);
+  if (kind === 'upper') return {q: `In Python, what is <code>"${w}".upper()</code>?`, ans: `"${w.toUpperCase()}"`, trap: `"${cap(w)}"`, wrong: [`"${w}"`, 'None'], why: '.upper() returns a new all-caps string.', how: ['.upper() converts every letter to uppercase.', `"${w.toUpperCase()}".`]};
+  if (kind === 'len') { const s = w + ' ' + pk(r, ['world', 'code', 'app']); return {q: `In Python, what is <code>len("${s}")</code>?`, ans: String(s.length), trap: String(s.length - 1), wrong: [String(s.split(' ').length), String(s.length + 1)], why: 'len counts every character, including spaces.', how: [`"${s}" has ${s.length} characters including the space.`]}; }
+  if (kind === 'split') { const parts = pkN(r, ['a', 'b', 'c', 'd', 'e', 'f'], ri(r, 3, 5)); const s = parts.join(','); return {q: `In Python, what is <code>len("${s}".split(","))</code>?`, ans: String(parts.length), trap: String(s.length), wrong: [String(parts.length - 1), String(parts.length + 1)], why: 'split returns a list of the pieces between commas.', how: [`"${s}".split(",") → ${JSON.stringify(parts).replace(/,/g, ', ')}.`, `That list has ${parts.length} items.`]}; }
+  if (kind === 'reverse') return {q: `In Python, what is <code>"${w}"[::-1]</code>?`, ans: `"${w.split('').reverse().join('')}"`, trap: `"${w}"`, wrong: [`"${w.slice(1)}"`, `"${w[w.length - 1]}"`], why: '[::-1] steps backwards through the string.', how: [`Read "${w}" backwards: "${w.split('').reverse().join('')}".`]};
+  if (kind === 'repeat') { const k = ri(r, 2, 4), s = w.slice(0, 2); return {q: `In Python, what is <code>"${s}" * ${k}</code>?`, ans: `"${s.repeat(k)}"`, trap: 'TypeError', wrong: [`"${s}${k}"`, `"${s}"`], why: '* on a string repeats it.', how: [`"${s}" repeated ${k} times: "${s.repeat(k)}".`]}; }
+  const ch = pk(r, w.split('')); return {q: `In Python, what is <code>"${w}".find("${ch}")</code>?`, ans: String(w.indexOf(ch)), trap: String(w.indexOf(ch) + 1), wrong: ['-1', String(w.lastIndexOf(ch) === w.indexOf(ch) ? w.length : w.lastIndexOf(ch))], why: '.find returns the first index, counting from 0.', how: [`Indexes: ${w.split('').map((c, i) => c + '=' + i).join(', ')}.`, `First "${ch}" is at ${w.indexOf(ch)}.`]};
+});
+fam('c-array', 'code', 2, 'JavaScript', 'array-methods', ['map', 'filter', 'reduce', 'push', 'indexOf', 'includes'], (r, kind) => {
+  const arr = pkN(r, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], ri(r, 3, 5)).sort((a, b) => a - b), A = '[' + arr.join(', ') + ']';
+  if (kind === 'map') { const k = ri(r, 2, 3); return {q: `In JavaScript, what is <code>${A}.map(x => x * ${k})</code>?`, ans: '[' + arr.map(x => x * k).join(', ') + ']', trap: A, wrong: [String(arr.reduce((a, b) => a + b, 0) * k), '[' + arr.map(x => x + k).join(', ') + ']'], why: 'map returns a new array with each item transformed.', how: [`Multiply each item by ${k}.`, `Result: [${arr.map(x => x * k).join(', ')}].`, 'The original array is unchanged.']}; }
+  if (kind === 'filter') { const t = arr[Math.floor(arr.length / 2)]; const out = arr.filter(x => x > t); return {q: `In JavaScript, what is <code>${A}.filter(x => x > ${t})</code>?`, ans: '[' + out.join(', ') + ']', trap: '[' + arr.filter(x => x >= t).join(', ') + ']', wrong: [String(out.length), 'true'], why: 'filter keeps the items where the test is true.', how: [`Keep items greater than ${t} (not equal).`, `Result: [${out.join(', ')}].`]}; }
+  if (kind === 'reduce') { const s = arr.reduce((a, b) => a + b, 0); return {q: `In JavaScript, what is <code>${A}.reduce((a, b) => a + b, 0)</code>?`, ans: String(s), trap: A, wrong: [String(s - arr[0]), String(arr.length)], why: 'reduce combines items into one value; here it sums them.', how: [`Start at 0 and add each item: ${arr.join(' + ')}.`, `= ${s}.`]}; }
+  if (kind === 'push') { const v = ri(r, 11, 20); return {q: 'What does this log?', code: `const a = ${A};\nconsole.log(a.push(${v}));`, ans: String(arr.length + 1), trap: '[' + arr.concat([v]).join(', ') + ']', wrong: [String(v), 'undefined'], why: 'push returns the new length, not the array.', how: [`push adds ${v} to the end.`, `It returns the new length: ${arr.length + 1}.`]}; }
+  if (kind === 'indexOf') { const v = pk(r, arr), miss = r() < 0.3, q = miss ? 99 : v; return {q: `In JavaScript, what is <code>${A}.indexOf(${q})</code>?`, ans: String(miss ? -1 : arr.indexOf(v)), trap: miss ? 'undefined' : String(arr.indexOf(v) + 1), wrong: miss ? ['0', 'null'] : ['-1', String(v)], why: 'indexOf returns the position from 0, or -1 if not found.', how: [miss ? '99 isn\'t in the array.' : `${v} is at position ${arr.indexOf(v)} (counting from 0).`, miss ? 'So -1.' : `So ${arr.indexOf(v)}.`]}; }
+  const v = r() < 0.5 ? pk(r, arr) : 99; return {q: `In JavaScript, what is <code>${A}.includes(${v})</code>?`, ans: String(arr.includes(v)), trap: String(!arr.includes(v)), wrong: [arr.includes(v) ? String(arr.indexOf(v)) : '-1', 'undefined'], why: 'includes returns true or false.', how: [`Is ${v} in the array? ${arr.includes(v) ? 'Yes' : 'No'}.`, `So ${arr.includes(v)}.`]};
+});
+fam('c-bigo2', 'code', 3, 'Big-O', 'bigo', ['single', 'nested', 'halving', 'two-loops', 'sqrt', 'nested-half'], (r, kind) => {
+  const map = {
+    single: ['for (let i = 0; i < n; i++) { total += a[i]; }', 'O(n)', 'O(n²)', 'One pass over n items.'],
+    nested: ['for (let i = 0; i < n; i++)\n  for (let j = 0; j < n; j++) { count++; }', 'O(n²)', 'O(n)', 'n inner steps for each of n outer steps.'],
+    halving: ['let i = n;\nwhile (i > 1) { i = Math.floor(i / 2); }', 'O(log n)', 'O(n)', 'Halving n repeatedly takes log₂ n steps.'],
+    'two-loops': ['for (let i = 0; i < n; i++) { a(); }\nfor (let j = 0; j < n; j++) { b(); }', 'O(n)', 'O(n²)', 'Two loops one after another add: n + n = 2n, which is O(n).'],
+    sqrt: ['for (let i = 1; i * i <= n; i++) { check(i); }', 'O(√n)', 'O(n)', 'i only goes up to √n.'],
+    'nested-half': ['for (let i = 0; i < n; i++)\n  for (let j = i; j < n; j++) { count++; }', 'O(n²)', 'O(n log n)', 'n + (n−1) + … + 1 = n(n+1)/2, still O(n²).']};
+  const [code, ans, trap, why] = map[kind];
+  return {q: 'What is the time complexity?', code, ans, trap, wrong: ['O(1)', 'O(n log n)', 'O(log n)', 'O(n)', 'O(n²)'].filter(x => x !== ans && x !== trap),
+    why, how: [why, `So ${ans}.`]};
+});
+fam('c-mod', 'code', 3, 'Code', 'modulo', ['js', 'py'], (r, lang) => {
+  const a = ri(r, 5, 20), b = ri(r, 3, 7); if (a % b === 0) return null;
+  const js = -(a % b), py = ((-a % b) + b) % b;
+  return {q: `In ${lang === 'js' ? 'JavaScript' : 'Python'}, what is <code>-${a} % ${b}</code>?`, ans: String(lang === 'js' ? js : py), trap: String(lang === 'js' ? py : js), wrong: [String(a % b), 'Error'],
+    why: lang === 'js' ? 'JavaScript\'s % keeps the sign of the left number.' : 'Python\'s % always has the sign of the divisor.', how: [`${a} % ${b} = ${a % b}.`, lang === 'js' ? `JS keeps the minus: -${a % b}.` : `Python wants a result between 0 and ${b - 1}: -${a} = ${b} × ${Math.floor(-a / b)} + ${py}.`, `Answer: ${lang === 'js' ? js : py}.`]};
+});
+fam('c-binary', 'code', 2, 'Code', 'binary', ['to-bin', 'to-dec'], (r, kind) => {
+  const n = ri(r, 5, 60), b = n.toString(2);
+  const pos = b.split('').reverse().map((c, i) => c === '1' ? Math.pow(2, i) : 0).filter(Boolean).reverse();
+  if (kind === 'to-bin') return {q: `What is ${n} in binary?`, ans: b, trap: (n + 1).toString(2), wrong: [b.split('').reverse().join('') === b ? (n - 1).toString(2) : b.split('').reverse().join(''), (n * 2).toString(2)], why: 'Write n as a sum of powers of 2.', how: [`${n} = ${pos.join(' + ')}.`, `Mark those positions with 1s: ${b}.`]};
+  return {q: `What is binary ${b} in decimal?`, ans: String(n), trap: String(parseInt(b.split('').reverse().join(''), 2) === n ? n + 1 : parseInt(b.split('').reverse().join(''), 2)), wrong: [b.replace(/^0+/, ''), String(n - 1)], why: 'Each binary digit is a power of 2.', how: [`From the right, the positions are 1, 2, 4, 8, 16, 32…`, `The 1s sit at ${pos.join(', ')}.`, `${pos.join(' + ')} = ${n}.`]};
+});
+fam('c-bitwise', 'code', 3, 'Code', 'bitwise', ['&', '|', '^', '<<'], (r, op) => {
+  const a = ri(r, 3, 15), b = op === '<<' ? ri(r, 1, 4) : ri(r, 2, 15); if (a === b) return null;
+  const val = op === '&' ? a & b : op === '|' ? (a | b) : op === '^' ? a ^ b : a << b;
+  const bin = x => x.toString(2).padStart(4, '0');
+  return {q: `What is <code>${a} ${op} ${b}</code>?`, ans: String(val), trap: String(op === '<<' ? a * b : op === '&' ? (a | b) : op === '|' ? a + b : a - b), wrong: [String(val + 1), String(op === '^' ? a & b : a ^ b)],
+    why: {'&': 'AND keeps bits that are 1 in both.', '|': 'OR keeps bits that are 1 in either.', '^': 'XOR keeps bits that are 1 in exactly one.', '<<': `Shifting left by ${b} multiplies by 2^${b}.`}[op],
+    how: op === '<<' ? [`${a} << ${b} = ${a} × 2^${b} = ${a} × ${Math.pow(2, b)}.`, `= ${val}.`] : [`${a} = ${bin(a)}, ${b} = ${bin(b)}.`, `${op === '&' ? 'AND' : op === '|' ? 'OR' : 'XOR'} bit by bit: ${bin(val)}.`, `= ${val}.`]};
+});
+fam('c-recursion', 'code', 3, 'Code', 'recursion', ['fact', 'fib', 'sumdown'], (r, kind) => {
+  if (kind === 'fact') { const n = ri(r, 3, 7); let f = 1; for (let i = 2; i <= n; i++) f *= i; return {q: `What does <code>f(${n})</code> return?`, code: 'def f(n):\n    if n <= 1:\n        return 1\n    return n * f(n - 1)', ans: String(f), trap: String(n * (n - 1)), wrong: [String(f / n), String(n)], why: 'This is factorial.', how: [`f(${n}) = ${Array.from({length: n}, (_, i) => n - i).join(' × ')}.`, `= ${f}.`]}; }
+  if (kind === 'fib') { const n = ri(r, 5, 10), F = [0, 1]; for (let i = 2; i <= n; i++) F.push(F[i - 1] + F[i - 2]); return {q: `What does <code>f(${n})</code> return?`, code: 'def f(n):\n    if n < 2:\n        return n\n    return f(n - 1) + f(n - 2)', ans: String(F[n]), trap: String(F[n - 1]), wrong: [String(F[n + 1] || F[n] + F[n - 1]), String(n * 2)], why: 'This is the Fibonacci sequence starting 0, 1.', how: [`f(0)…f(${n}): ${F.join(', ')}.`, `f(${n}) = ${F[n]}.`]}; }
+  const n = ri(r, 4, 12), s = n * (n + 1) / 2; return {q: `What does <code>f(${n})</code> return?`, code: 'def f(n):\n    if n == 0:\n        return 0\n    return n + f(n - 1)', ans: String(s), trap: String(n * (n - 1) / 2), wrong: [String(n * n), String(n)], why: 'It adds n + (n−1) + … + 1.', how: [`f(${n}) = ${n} + ${n - 1} + … + 1 + 0.`, `= ${n}×${n + 1}/2 = ${s}.`]};
+});
+fam('c-swap', 'code', 2, 'Code', 'trace', ['swap', 'accumulate', 'string'], (r, kind) => {
+  if (kind === 'swap') { const a = ri(r, 2, 9), b = ri(r, 10, 20); return {q: 'What are x and y at the end?', code: `x = ${a}\ny = ${b}\nx = x + y\ny = x - y\nx = x - y`, ans: `x=${b}, y=${a}`, trap: `x=${a}, y=${b}`, wrong: [`x=${a + b}, y=${a}`, `x=${b}, y=${b}`], why: 'This swaps two numbers without a temporary variable.', how: [`x = ${a} + ${b} = ${a + b}.`, `y = ${a + b} − ${b} = ${a}.`, `x = ${a + b} − ${a} = ${b}.`]}; }
+  if (kind === 'accumulate') { const n = ri(r, 3, 6), k = ri(r, 2, 3); let t = 1; for (let i = 0; i < n; i++) t *= k; return {q: 'What is printed?', code: `t = 1\nfor i in range(${n}):\n    t = t * ${k}\nprint(t)`, ans: String(t), trap: String(k * n), wrong: [String(t / k), String(t * k)], why: `t is multiplied by ${k}, ${n} times.`, how: [`range(${n}) runs ${n} times.`, `t = ${k}^${n} = ${t}.`]}; }
+  const n = ri(r, 3, 6); const s = Array.from({length: n}, (_, i) => i).join(''); return {q: 'What is printed?', code: `s = ""\nfor i in range(${n}):\n    s = s + str(i)\nprint(s)`, ans: `"${s}"`.replace(/"/g, ''), trap: String(n * (n - 1) / 2), wrong: [Array.from({length: n}, (_, i) => i + 1).join(''), String(n)], why: 'str(i) turns each number into text, which is joined on.', how: [`range(${n}) gives ${Array.from({length: n}, (_, i) => i).join(', ')}.`, `Joining them as text: ${s}.`]};
+});
+fam('c-range', 'code', 2, 'Python', 'loops', ['plain', 'step'], (r, kind) => {
+  const a = ri(r, 0, 5), b = ri(r, a + 4, a + 20);
+  if (kind === 'plain') return {q: `How many numbers does <code>range(${a}, ${b})</code> produce?`, ans: String(b - a), trap: String(b - a + 1), wrong: [String(b), String(b - a - 1)], why: 'range stops before the end value.', how: [`From ${a} up to ${b - 1}.`, `${b} − ${a} = ${b - a} numbers.`]};
+  const s = ri(r, 2, 4), n = Math.ceil((b - a) / s); return {q: `How many numbers does <code>range(${a}, ${b}, ${s})</code> produce?`, ans: String(n), trap: String(Math.floor((b - a) / s) === n ? n + 1 : Math.floor((b - a) / s)), wrong: [String(b - a), String(n - 1 || n + 2)], why: 'Count the steps that stay below the end.', how: [`Values: ${Array.from({length: n}, (_, i) => a + i * s).join(', ')}.`, `That's ${n}.`]};
+});
+fam('c-typeof', 'code', 2, 'JavaScript', 'typeof', null, r => {
+  const facts = [['[]', '"object"'], ['null', '"object"'], ['NaN', '"number"'], ['function(){}', '"function"'], ['"5"', '"string"'], ['undefined', '"undefined"'], ['{}', '"object"'], ['42n', '"bigint"'], ['true', '"boolean"']];
+  const [v, t] = pk(r, facts), opts = ['"object"', '"number"', '"string"', '"undefined"', '"array"', '"null"', '"function"', '"boolean"'].filter(x => x !== t);
+  const trap = v === '[]' ? '"array"' : v === 'null' ? '"null"' : v === 'NaN' ? '"undefined"' : opts[0];
+  return {q: `In JavaScript, what is <code>typeof ${v}</code>?`, ans: t, trap, wrong: pkN(r, opts.filter(x => x !== trap), 2),
+    why: v === '[]' ? 'Arrays are objects in JS; use Array.isArray to check.' : v === 'null' ? 'A historic bug: typeof null is "object".' : v === 'NaN' ? 'NaN ("not a number") is still of type number.' : `typeof ${v} is ${t}.`, how: [`typeof ${v} → ${t}.`]};
+});
+fam('c-while-half', 'code', 3, 'Code', 'bigo', null, r => {
+  const n = pk(r, [8, 16, 32, 64, 100, 128, 1000, 1024]); let i = n, c = 0; while (i > 1) { i = Math.floor(i / 2); c++; }
+  return {q: 'How many times does the loop body run?', code: `let i = ${n}, count = 0;\nwhile (i > 1) {\n  i = Math.floor(i / 2);\n  count++;\n}`, ans: String(c), trap: String(n / 2), wrong: [String(c + 1), String(n)],
+    why: 'Each pass halves i, so it runs about log₂ n times.', how: [`i: ${(() => { let x = n, o = [x]; while (x > 1) { x = Math.floor(x / 2); o.push(x); } return o.join(' → '); })()}.`, `That's ${c} halvings.`]};
+});
+fam('c-sql2', 'code', 3, 'SQL', 'sql', ['count', 'distinct', 'groupby'], (r, kind) => {
+  const cities = ['Paris', 'Lima', 'Oslo', 'Pune']; const rows = Array.from({length: ri(r, 5, 7)}, () => ({c: pk(r, cities), a: ri(r, 10, 90)}));
+  const table = 'orders(city, amount):\n' + rows.map(x => `${x.c}, ${x.a}`).join('\n');
+  if (kind === 'count') { const t = pk(r, [30, 40, 50, 60]), n = rows.filter(x => x.a > t).length; return {q: `How many rows does <code>SELECT * FROM orders WHERE amount > ${t}</code> return?`, code: table, ans: String(n), trap: String(rows.filter(x => x.a >= t).length === n ? n + 1 : rows.filter(x => x.a >= t).length), wrong: [String(rows.length), String(rows.length - n)], why: 'WHERE keeps rows that pass the test.', how: [`Amounts: ${rows.map(x => x.a).join(', ')}.`, `Above ${t}: ${rows.filter(x => x.a > t).map(x => x.a).join(', ') || 'none'}.`, `${n} row${n === 1 ? '' : 's'}.`]}; }
+  if (kind === 'distinct') { const d = new Set(rows.map(x => x.c)).size; return {q: 'What does <code>SELECT COUNT(DISTINCT city) FROM orders</code> return?', code: table, ans: String(d), trap: String(rows.length), wrong: [String(d === 4 ? 3 : d + 1), String(d - 1 || d + 2)], why: 'DISTINCT counts each value once.', how: [`Cities: ${rows.map(x => x.c).join(', ')}.`, `Unique: ${[...new Set(rows.map(x => x.c))].join(', ')}.`, `${d}.`]}; }
+  const g = {}; rows.forEach(x => g[x.c] = (g[x.c] || 0) + x.a); const c = pk(r, Object.keys(g));
+  return {q: `What is the ${c} total from <code>SELECT city, SUM(amount) FROM orders GROUP BY city</code>?`, code: table, ans: String(g[c]), trap: String(Math.max(...rows.filter(x => x.c === c).map(x => x.a))), wrong: [String(rows.reduce((s, x) => s + x.a, 0)), String(rows.filter(x => x.c === c).length)], why: 'GROUP BY adds up each city\'s rows separately.', how: [`${c} rows: ${rows.filter(x => x.c === c).map(x => x.a).join(' + ')}.`, `= ${g[c]}.`]};
+});
+
+addStatic('cd', 'code', 1, 'Dev basics', 'dev-basics', [
+  {q: 'What does CSS stand for?', a: 'Cascading Style Sheets', w: ['Computer Style System', 'Creative Style Syntax', 'Coded Site Styling'], why: 'CSS styles HTML pages; "cascading" is how rules override each other.'},
+  {q: 'Which HTTP status means "Unauthorized" (not logged in)?', a: '401', w: ['403', '404', '500'], trap: '403', why: '401 = not authenticated; 403 = authenticated but not allowed.'},
+  {q: 'Which HTTP method is meant for fetching data without changing anything?', a: 'GET', w: ['POST', 'DELETE', 'PATCH'], why: 'GET should be safe and repeatable.'},
+  {q: 'What does "git pull" do?', a: 'Fetches remote changes and merges them into your branch', w: ['Uploads your commits', 'Deletes your local branch', 'Creates a new repository'], trap: 'Uploads your commits', why: 'pull = fetch + merge; push uploads.'},
+  {q: 'What is an API?', a: 'A defined way for programs to talk to each other', w: ['A programming language', 'A type of database', 'A web browser plugin'], why: 'Application Programming Interface.'},
+  {q: 'Which data structure is first-in, first-out?', a: 'Queue', w: ['Stack', 'Tree', 'Hash map'], trap: 'Stack', why: 'Queues are FIFO; stacks are LIFO.'},
+  {q: 'What does JSON stand for?', a: 'JavaScript Object Notation', w: ['Java Standard Output Network', 'JavaScript Online Node', 'Joined Simple Object Names'], why: 'A text format for structured data.'},
+  {q: 'What does "git commit" do?', a: 'Saves a snapshot of staged changes locally', w: ['Uploads code to GitHub', 'Deletes old files', 'Merges two branches'], trap: 'Uploads code to GitHub', why: 'Commits are local until you push.'},
+  {q: 'In SQL, which keyword sorts results?', a: 'ORDER BY', w: ['SORT BY', 'GROUP BY', 'ARRANGE'], trap: 'GROUP BY', why: 'ORDER BY sorts; GROUP BY groups.'},
+  {q: 'What does HTTPS add over HTTP?', a: 'Encryption between browser and server', w: ['Faster loading', 'Better SEO only', 'Bigger file uploads'], why: 'The S is TLS encryption.'},
+  {q: 'A variable declared with const in JavaScript…', a: 'Can\'t be reassigned, but its object contents can change', w: ['Can never change at all', 'Is global', 'Is deleted after use'], trap: 'Can never change at all', why: 'const locks the binding, not the object.'},
+  {q: 'What is a race condition?', a: 'A bug where the result depends on the timing of parallel operations', w: ['Code that runs too fast', 'A loop that never ends', 'A memory leak'], why: 'Two things race to touch the same data.'},
+  {q: 'Which is NOT a programming language?', a: 'HTML', w: ['Python', 'Rust', 'Go'], why: 'HTML is a markup language: it describes structure, it doesn\'t compute.'},
+  {q: 'What does "DRY" mean in coding?', a: 'Don\'t Repeat Yourself', w: ['Do Run Yearly', 'Debug, Review, Yield', 'Data Ready Yet'], why: 'Avoid duplicating logic.'},
+  {q: 'What does an index on a database column mainly do?', a: 'Makes lookups on that column faster', w: ['Encrypts the column', 'Sorts the table permanently', 'Prevents duplicates always'], why: 'Indexes speed reads at some cost to writes.'},
+  {q: 'Python: what does <code>[1, 2, 3][3]</code> do?', a: 'Raises IndexError', w: ['Returns 3', 'Returns None', 'Returns 0'], trap: 'Returns 3', why: 'Indexes go 0, 1, 2; there is no index 3.'},
+  {q: 'JavaScript: what is <code>Math.round(2.5)</code>?', a: '3', w: ['2', '2.5', 'NaN'], trap: '2', why: 'JS rounds .5 up (unlike Python\'s round, which gives 2).'},
+  {q: 'What does "async/await" help with?', a: 'Writing code that waits for slow operations without blocking', w: ['Making loops faster', 'Encrypting data', 'Compiling code'], why: 'It reads like normal code while waiting on I/O.'},
+]);
+
+// ── Words & language ──
+const SYN = [['happy', 'joyful'], ['big', 'large'], ['fast', 'quick'], ['smart', 'clever'], ['begin', 'start'], ['finish', 'complete'], ['brave', 'courageous'], ['tired', 'exhausted'], ['angry', 'furious'], ['rich', 'wealthy'], ['tiny', 'minute'], ['difficult', 'challenging'], ['honest', 'truthful'], ['ancient', 'old'], ['rare', 'uncommon'], ['help', 'assist'], ['show', 'display'], ['buy', 'purchase'], ['fix', 'repair'], ['quiet', 'silent'], ['strange', 'odd'], ['enough', 'sufficient'], ['choose', 'select'], ['mistake', 'error'], ['polite', 'courteous'], ['calm', 'peaceful'], ['famous', 'renowned'], ['shy', 'timid'], ['eager', 'keen'], ['brief', 'short'], ['fake', 'counterfeit'], ['funny', 'humorous'], ['scared', 'afraid'], ['sad', 'gloomy']];
+const ANT = [['ancient', 'modern'], ['generous', 'selfish'], ['increase', 'decrease'], ['accept', 'refuse'], ['victory', 'defeat'], ['expand', 'shrink'], ['fragile', 'sturdy'], ['optimistic', 'pessimistic'], ['permanent', 'temporary'], ['include', 'exclude'], ['maximum', 'minimum'], ['ascend', 'descend'], ['arrive', 'depart'], ['guilty', 'innocent'], ['shallow', 'deep'], ['scarce', 'plentiful'], ['praise', 'criticise'], ['superior', 'inferior'], ['vague', 'clear'], ['humble', 'arrogant'], ['transparent', 'opaque'], ['borrow', 'lend'], ['artificial', 'natural'], ['bold', 'timid'], ['import', 'export'], ['majority', 'minority'], ['rigid', 'flexible'], ['ally', 'enemy'], ['complex', 'simple'], ['reward', 'punishment']];
+fam('w-syn', 'words', 1, 'Vocabulary', 'synonyms', null, r => {
+  const [w, s] = pk(r, SYN), ant = ANT.find(x => x[0] === w), others = pkN(r, SYN.filter(x => x[0] !== w).map(x => x[1]), 3);
+  return {q: `Which word means the same as "${w}"?`, ans: s, trap: ant ? ant[1] : undefined, wrong: others,
+    why: `"${s}" fits anywhere "${w}" does.`, how: [`Try each option in a sentence: "It was a ${w} moment" → "It was a ${s} moment".`, `Only "${s}" keeps the meaning.`]};
+});
+fam('w-ant', 'words', 2, 'Vocabulary', 'antonyms', null, r => {
+  const [w, a] = pk(r, ANT), syn = SYN.find(x => x[0] === w), others = pkN(r, ANT.filter(x => x[0] !== w).map(x => x[1]), 3);
+  return {q: `Which word means the opposite of "${w}"?`, ans: a, trap: syn ? syn[1] : undefined, wrong: others,
+    why: `"${a}" reverses the meaning of "${w}".`, how: [`Ask: what flips "${w}" around?`, `"${a}" is its opposite.`]};
+});
+const CATS = {fruits: ['apple', 'mango', 'banana', 'grape', 'pear', 'cherry', 'plum', 'kiwi'], vegetables: ['carrot', 'potato', 'onion', 'spinach', 'cabbage', 'broccoli'], 'birds': ['eagle', 'owl', 'sparrow', 'parrot', 'penguin', 'ostrich'], 'planets': ['Mars', 'Venus', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'], 'musical instruments': ['violin', 'flute', 'drum', 'guitar', 'trumpet', 'cello'], 'tools': ['hammer', 'wrench', 'saw', 'screwdriver', 'drill', 'pliers'], 'metals': ['iron', 'copper', 'gold', 'silver', 'zinc', 'aluminium'], 'shapes': ['circle', 'triangle', 'square', 'hexagon', 'oval'], 'joints': ['elbow', 'knee', 'ankle', 'wrist', 'shoulder', 'hip'], 'currencies': ['dollar', 'euro', 'rupee', 'yen', 'peso', 'pound']};
+fam('w-odd', 'words', 1, 'Verbal', 'odd-one-out', Object.keys(CATS), (r, cat) => {
+  const group = pkN(r, CATS[cat], 3), otherCat = pk(r, Object.keys(CATS).filter(c => c !== cat && !(cat === 'fruits' && c === 'vegetables') && !(cat === 'vegetables' && c === 'fruits'))), odd = pk(r, CATS[otherCat]);
+  return {q: `Which is the odd one out: ${pkN(r, group.concat([odd]), 4).join(', ')}?`, ans: odd, wrong: group,
+    why: `The others are all ${cat}.`, how: [`Find what most of them share: ${group.join(', ')} are ${cat}.`, `${odd} belongs to a different group (${otherCat}).`]};
+});
+const SPELL = [['necessary', 'neccessary', 'necesary', 'neccesary'], ['separate', 'seperate', 'separete', 'seperete'], ['definitely', 'definately', 'definitly', 'defenitely'], ['accommodate', 'accomodate', 'acommodate', 'accomadate'], ['occurrence', 'occurence', 'ocurrence', 'occurrance'], ['embarrass', 'embarass', 'embarras', 'embaress'], ['receive', 'recieve', 'receeve', 'recive'], ['calendar', 'calandar', 'calander', 'calendre'], ['beginning', 'begining', 'beggining', 'beginnig'], ['tomorrow', 'tommorow', 'tomorow', 'tommorrow'], ['address', 'adress', 'addres', 'adresse'], ['government', 'goverment', 'govenment', 'governmant'], ['environment', 'enviroment', 'enviornment', 'environmant'], ['restaurant', 'restaraunt', 'resturant', 'restaurent'], ['privilege', 'privelege', 'priviledge', 'privilage'], ['rhythm', 'rythm', 'rhythym', 'rhytm'], ['conscience', 'concience', 'consciense', 'conscence'], ['maintenance', 'maintainance', 'maintenence', 'maintanance'], ['questionnaire', 'questionaire', 'questionnair', 'questionnare'], ['millennium', 'millenium', 'milennium', 'millennim'], ['publicly', 'publically', 'publicaly', 'publicley'], ['weird', 'wierd', 'weerd', 'wiered'], ['independent', 'independant', 'indipendent', 'independint'], ['library', 'libary', 'librery', 'liberary'], ['February', 'Febuary', 'Februray', 'Febrary'], ['pronunciation', 'pronounciation', 'pronunciaton', 'prononciation'], ['occasion', 'occassion', 'ocassion', 'ocasion'], ['argument', 'arguement', 'arguemant', 'argumant'], ['existence', 'existance', 'existense', 'exsistence'], ['guarantee', 'guarentee', 'garantee', 'guarantie'], ['business', 'buisness', 'busines', 'bussiness'], ['believe', 'beleive', 'belive', 'beleave'], ['committee', 'commitee', 'comittee', 'committe'], ['immediately', 'immediatly', 'imediately', 'immedietly'], ['recommend', 'reccomend', 'recomend', 'reccommend']];
+fam('w-spell', 'words', 2, 'Spelling', 'spelling', null, r => {
+  const [ok, ...bad] = pk(r, SPELL);
+  return {q: 'Which spelling is correct?', ans: ok, trap: bad[0], wrong: bad.slice(1),
+    why: `It's spelled "${ok}".`, how: [`Correct: "${ok}".`, `"${bad[0]}" is the most common misspelling. Say it slowly by syllable and watch doubled letters.`]};
+});
+const ANAG = [['listen', 'silent'], ['heart', 'earth'], ['night', 'thing'], ['below', 'elbow'], ['state', 'taste'], ['dusty', 'study'], ['inch', 'chin'], ['lemon', 'melon'], ['angel', 'angle'], ['save', 'vase'], ['evil', 'vile'], ['stressed', 'desserts'], ['peach', 'cheap'], ['notes', 'stone'], ['ocean', 'canoe'], ['secure', 'rescue'], ['senator', 'treason'], ['brag', 'grab'], ['cider', 'cried']];
+fam('w-anagram', 'words', 2, 'Word patterns', 'anagram', null, r => {
+  const [w, a] = pk(r, ANAG), others = pkN(r, ANAG.filter(x => x[0] !== w && x[1] !== a && x[1].length >= a.length - 1 && x[1].length <= a.length + 1).map(x => x[1]), 3);
+  return {q: `Which word uses exactly the same letters as "${w}"?`, ans: a, wrong: others,
+    why: `"${w}" and "${a}" are anagrams.`, how: [`Sort the letters: ${w.split('').sort().join('')}.`, `"${a}" sorts to ${a.split('').sort().join('')} too.`]};
+});
+const IDIOMS = [['Break the ice', 'Start a conversation in an awkward situation'], ['Bite the bullet', 'Face something unpleasant bravely'], ['Under the weather', 'Feeling ill'], ['Cost an arm and a leg', 'Be very expensive'], ['Hit the sack', 'Go to bed'], ['Spill the beans', 'Reveal a secret'], ['A piece of cake', 'Something very easy'], ['Once in a blue moon', 'Very rarely'], ['The ball is in your court', 'It\'s your decision now'], ['Burn the midnight oil', 'Work late into the night'], ['Hit the nail on the head', 'Describe something exactly right'], ['Barking up the wrong tree', 'Looking in the wrong place'], ['Cut corners', 'Do something cheaply or carelessly'], ['Beat around the bush', 'Avoid saying something directly'], ['Back to the drawing board', 'Start again after a failure'], ['Call it a day', 'Stop working for now'], ['Miss the boat', 'Lose an opportunity'], ['On thin ice', 'In a risky position'], ['Pull someone\'s leg', 'Joke with someone'], ['Raining cats and dogs', 'Raining very heavily'], ['See eye to eye', 'Agree with someone'], ['Sit on the fence', 'Avoid taking a side'], ['The last straw', 'The final problem that makes you give up'], ['Take it with a grain of salt', 'Don\'t fully believe it'], ['Throw in the towel', 'Give up'], ['Get cold feet', 'Become too nervous to go ahead'], ['In hot water', 'In trouble'], ['Jump the gun', 'Act too soon'], ['Keep your chin up', 'Stay positive'], ['Let sleeping dogs lie', 'Don\'t stir up an old problem']];
+fam('w-idiom', 'words', 2, 'Idioms', 'idioms', null, r => {
+  const [i, m] = pk(r, IDIOMS), others = pkN(r, IDIOMS.filter(x => x[0] !== i).map(x => x[1]), 3);
+  return {q: `What does "${i}" mean?`, ans: m, wrong: others,
+    why: `"${i}" = ${m.toLowerCase()}.`, how: ['Idioms aren\'t literal; picture how people use the phrase.', `"${i}" means: ${m.toLowerCase()}.`]};
+});
+const PLURALS = [['mouse', 'mice', 'mouses', 'mices', 'meese'], ['crisis', 'crises', 'crisises', 'crisi', 'crisis\'s'], ['phenomenon', 'phenomena', 'phenomenas', 'phenomenums', 'phenomenon\'s'], ['criterion', 'criteria', 'criterias', 'criterium', 'criterion\'s'], ['child', 'children', 'childs', 'childrens', 'childes'], ['tooth', 'teeth', 'tooths', 'teeths', 'toothes'], ['goose', 'geese', 'gooses', 'geeses', 'goosen'], ['analysis', 'analyses', 'analysises', 'analysi', 'analysis\'s'], ['sheep', 'sheep', 'sheeps', 'sheepes', 'sheepen'], ['thesis', 'theses', 'thesises', 'thesi', 'thesis\'s'], ['wolf', 'wolves', 'wolfs', 'wolfes', 'wolvs'], ['knife', 'knives', 'knifes', 'knifs', 'knive'], ['woman', 'women', 'womans', 'womens', 'womenes'], ['man', 'men', 'mans', 'mens', 'menns'], ['foot', 'feet', 'foots', 'feets', 'footes'], ['ox', 'oxen', 'oxs', 'oxies', 'oxe']];
+fam('w-plural', 'words', 2, 'Grammar', 'plurals', null, r => {
+  const [s, p, ...w] = pk(r, PLURALS);
+  return {q: `What is the plural of "${s}"?`, ans: p, trap: w[0], wrong: w.slice(1),
+    why: `"${s}" has an irregular plural: "${p}".`, how: [`Regular plurals add -s or -es, but "${s}" is irregular.`, `${s} → ${p}.`]};
+});
+const LETTER_WORDS = ['mississippi', 'committee', 'banana', 'bookkeeper', 'necessary', 'possession', 'parallel', 'assessment', 'occurrence', 'strawberry', 'nonsense', 'referee', 'successful', 'mammal', 'balloon', 'coffee', 'excellence', 'tattoo', 'address', 'cucumber'];
+fam('w-count', 'words', 1, 'Word patterns', 'word-count', ['letter', 'vowels'], (r, kind) => {
+  const w = pk(r, LETTER_WORDS);
+  if (kind === 'vowels') { const n = w.split('').filter(c => 'aeiou'.includes(c)).length; return {q: `How many vowels (a, e, i, o, u) are in "${w}"?`, ans: n, trap: n - 1, wrong: [n + 1, n + 2], why: 'Point at each letter and count only a, e, i, o, u.', how: [`${w.split('').map(c => 'aeiou'.includes(c) ? '[' + c + ']' : c).join('')}`, `Count the bracketed vowels: ${n}.`]}; }
+  const counts = {}; w.split('').forEach(c => counts[c] = (counts[c] || 0) + 1); const multi = Object.keys(counts).filter(c => counts[c] > 1); const ch = pk(r, multi.length ? multi : Object.keys(counts)), n = counts[ch];
+  return {q: `How many times does the letter "${ch}" appear in "${w}"?`, ans: n, trap: n - 1, wrong: [n + 1, n + 2],
+    why: 'Doubled letters are easy to miscount.', how: [`${w.split('').map(c => c === ch ? '[' + c + ']' : c).join('')}`, `Count the bracketed letters: ${n}.`]};
+});
+const COMPOUNDS = [['fire', ['fly', 'place', 'work']], ['sun', ['flower', 'glasses', 'rise']], ['rain', ['bow', 'coat', 'drop']], ['foot', ['ball', 'print', 'step']], ['book', ['shelf', 'worm', 'mark']], ['snow', ['ball', 'flake', 'man']], ['water', ['fall', 'melon', 'proof']], ['home', ['work', 'made', 'sick']], ['head', ['ache', 'line', 'phone']], ['air', ['port', 'plane', 'line']], ['sea', ['shell', 'food', 'side']], ['hand', ['shake', 'bag', 'made']], ['door', ['bell', 'step', 'knob']], ['light', ['house', 'bulb', 'weight']], ['star', ['fish', 'light', 'dust']], ['post', ['man', 'card', 'box']], ['eye', ['brow', 'lash', 'sight']], ['tooth', ['brush', 'paste', 'ache']]];
+fam('w-compound', 'words', 2, 'Word patterns', 'compounds', null, r => {
+  const [head, tails] = pk(r, COMPOUNDS), others = pkN(r, COMPOUNDS.filter(x => x[0] !== head).map(x => x[0]), 3);
+  return {q: `Which word goes in front of all three: ${tails.join(', ')}?`, ans: head, wrong: others,
+    why: `${tails.map(t => head + t).join(', ')}.`, how: ['Try each option in front of every word.', `${tails.map(t => head + t).join(', ')} all work.`]};
+});
+const ALPHA = [['photo', 'phone', 'photograph', 'phase', 'physics', 'pharmacy', 'philosophy'], ['stand', 'standard', 'star', 'start', 'state', 'statue', 'stable'], ['interest', 'internet', 'interval', 'interview', 'internal', 'interrupt'], ['comet', 'comic', 'comma', 'command', 'common', 'comfort'], ['ban', 'band', 'bandage', 'banana', 'bank', 'banner']];
+fam('w-alpha', 'words', 2, 'Word patterns', 'alpha-order', ['first', 'last'], (r, which) => {
+  const words = pkN(r, pk(r, ALPHA), 4), sorted = words.slice().sort((a, b) => a.localeCompare(b)), ans = which === 'first' ? sorted[0] : sorted[3];
+  return {q: `Which word comes ${which} in alphabetical order: ${words.join(', ')}?`, ans, trap: which === 'first' ? sorted[1] : sorted[2], wrong: words.filter(x => x !== ans && x !== (which === 'first' ? sorted[1] : sorted[2])),
+    why: 'Compare letter by letter until they differ. A shorter word that matches the start comes first.', how: [`Sorted: ${sorted.join(', ')}.`, `${cap(which)}: ${ans}.`]};
+});
+const ONEWORD = [['A person who loves books', 'bibliophile'], ['Someone who can\'t sleep', 'insomniac'], ['A person walking on a road', 'pedestrian'], ['Someone who gives money to good causes', 'philanthropist'], ['Someone who always expects the best', 'optimist'], ['Someone who always expects the worst', 'pessimist'], ['A life story written by the person themselves', 'autobiography'], ['Able to speak two languages', 'bilingual'], ['Of unknown name', 'anonymous'], ['Agreed by everyone', 'unanimous'], ['Impossible to read', 'illegible'], ['Too quiet to be heard', 'inaudible'], ['An animal that eats both plants and meat', 'omnivore'], ['An animal that eats only plants', 'herbivore'], ['To keep delaying things you should do', 'procrastinate'], ['A beginner', 'novice'], ['A person with long experience', 'veteran'], ['A word with the opposite meaning', 'antonym'], ['Happening every two years', 'biennial'], ['A government by the people', 'democracy']];
+fam('w-oneword', 'words', 3, 'Vocabulary', 'one-word', null, r => {
+  const [d, w] = pk(r, ONEWORD), others = pkN(r, ONEWORD.filter(x => x[1] !== w).map(x => x[1]), 3);
+  return {q: `One word for: "${d}"`, ans: w, wrong: others,
+    why: `"${w}" means ${d.toLowerCase()}.`, how: ['Look for the root that matches the meaning.', `${d} → ${w}.`]};
+});
+const PALI = [['level', 'lever'], ['radar', 'radio'], ['racecar', 'racket'], ['civic', 'civil'], ['refer', 'rafter'], ['rotor', 'motor'], ['madam', 'madman'], ['noon', 'moon'], ['kayak', 'kayaks'], ['stats', 'start']];
+fam('w-pali', 'words', 1, 'Word patterns', 'palindrome', null, r => {
+  const [p, near] = pk(r, PALI), others = [near].concat(pkN(r, PALI.filter(x => x[0] !== p).map(x => x[1]), 2));
+  return {q: 'Which word reads the same forwards and backwards?', ans: p, trap: near, wrong: others.slice(1),
+    why: `"${p}" backwards is "${p.split('').reverse().join('')}".`, how: [`Reverse each option: "${near}" → "${near.split('').reverse().join('')}".`, `"${p}" → "${p}". Same both ways.`]};
+});
+
+addStatic('wd', 'words', 2, 'Grammar', 'confusables', [
+  {q: 'The dog wagged ___ tail.', a: 'its', w: ['it\'s', 'its\''], why: '"It\'s" means "it is". Possessive "its" has no apostrophe.', how: ['Try "it is": "the dog wagged it is tail" makes no sense.', 'So it\'s the possessive: its.']},
+  {q: '___ raining again.', a: 'It\'s', w: ['Its', 'Its\''], why: '"It\'s" = "it is".', how: ['"It is raining again" works.', 'So "It\'s".']},
+  {q: 'I\'d rather walk ___ drive.', a: 'than', w: ['then', 'that'], why: '"Than" compares; "then" is about time.', how: ['You\'re comparing walking with driving.', 'Comparison → than.']},
+  {q: 'We ate, and ___ we left.', a: 'then', w: ['than', 'that'], why: '"Then" shows what happened next.', how: ['It\'s about order in time.', 'Time → then.']},
+  {q: 'The new rules will ___ everyone.', a: 'affect', w: ['effect', 'afect'], why: 'Affect is usually the verb; effect is usually the noun.', how: ['You need a verb (an action).', 'Affect = to change something.']},
+  {q: 'The medicine had no ___.', a: 'effect', w: ['affect', 'efect'], why: 'Effect is the noun: a result.', how: ['"No ___" needs a noun.', 'Effect = result.']},
+  {q: 'Please don\'t ___ your keys.', a: 'lose', w: ['loose', 'loss'], why: 'Lose = misplace. Loose = not tight.', how: ['You mean misplace.', 'Lose (one o).']},
+  {q: 'These jeans are too ___.', a: 'loose', w: ['lose', 'loss'], why: 'Loose = not tight.', how: ['You mean not tight.', 'Loose (two o\'s).']},
+  {q: '___ going to win?', a: 'Who\'s', w: ['Whose', 'Who'], why: '"Who\'s" = "who is".', how: ['"Who is going to win?" works.', 'So "Who\'s".']},
+  {q: '___ bag is this?', a: 'Whose', w: ['Who\'s', 'Who'], why: '"Whose" asks who owns something.', how: ['"Who is bag" makes no sense.', 'Ownership → whose.']},
+  {q: 'There are ___ people here than yesterday.', a: 'fewer', w: ['less', 'lesser'], why: 'Fewer for things you count; less for amounts.', how: ['You can count people.', 'Countable → fewer.']},
+  {q: 'I drink ___ coffee these days.', a: 'less', w: ['fewer', 'lesser'], why: 'Coffee is an amount, not separate items.', how: ['You don\'t count "coffees" here.', 'Amount → less.']},
+  {q: 'He gave the tickets to Sam and ___.', a: 'me', w: ['I', 'myself'], k: 'agreement', why: 'Drop "Sam and": "He gave the tickets to me."', how: ['Remove the other person and test it.', '"To me" is right, so "Sam and me".']},
+  {q: 'Sam and ___ went to the cinema.', a: 'I', w: ['me', 'myself'], k: 'agreement', why: 'Drop "Sam and": "I went to the cinema."', how: ['Remove the other person and test it.', '"I went" is right, so "Sam and I".']},
+  {q: 'Each of the students ___ a laptop.', a: 'has', w: ['have', 'having'], k: 'agreement', why: '"Each" is singular.', how: ['The subject is "each", not "students".', 'Singular → has.']},
+  {q: 'Neither the players nor the coach ___ happy.', a: 'is', w: ['are', 'were'], k: 'agreement', why: 'With neither/nor, the verb matches the nearer subject: "the coach".', how: ['The nearer subject is "the coach" (singular).', 'So "is".']},
+  {q: 'Either the cat or the dogs ___ broken the vase.', a: 'have', w: ['has', 'having'], k: 'agreement', why: 'The nearer subject is "the dogs" (plural).', how: ['With either/or, match the nearer subject.', '"The dogs have".']},
+  {q: 'I could ___ gone earlier.', a: 'have', w: ['of', 'had'], why: '"Could of" is a mishearing of "could\'ve".', how: ['"Could\'ve" = "could have".', 'Never "could of".']},
+  {q: 'They forgot ___ umbrellas.', a: 'their', w: ['there', 'they\'re'], why: 'Their = belonging to them.', how: ['The umbrellas belong to them.', 'Possession → their.']},
+  {q: 'Put the box over ___.', a: 'there', w: ['their', 'they\'re'], why: 'There = a place.', how: ['It\'s about a place.', 'Place → there.']},
+  {q: '___ already here.', a: 'They\'re', w: ['Their', 'There'], why: 'They\'re = they are.', how: ['"They are already here" works.', 'So "They\'re".']},
+  {q: 'The ___ of the school spoke at assembly.', a: 'principal', w: ['principle', 'principel'], why: 'Principal = head person (or main). Principle = a rule or belief.', how: ['It\'s a person.', 'Person → principal.']},
+  {q: 'Honesty is an important ___.', a: 'principle', w: ['principal', 'principel'], why: 'Principle = a rule or belief.', how: ['It\'s a value, not a person.', 'Belief → principle.']},
+  {q: 'Please ___ the invitation.', a: 'accept', w: ['except', 'expect'], why: 'Accept = agree to receive.', how: ['You\'re agreeing to it.', 'Accept.']},
+  {q: 'Everyone came ___ Tom.', a: 'except', w: ['accept', 'expect'], why: 'Except = apart from.', how: ['Tom is left out.', 'Except.']},
+  {q: 'This car is ___ expensive.', a: 'too', w: ['to', 'two'], why: 'Too = more than enough (or also).', how: ['You mean "overly expensive".', 'Too.']},
+  {q: 'Could you ___ me your pen?', a: 'lend', w: ['borrow', 'lended'], why: 'You lend to someone; you borrow from someone.', how: ['The other person is giving it to you.', 'They lend.']},
+  {q: 'Can I ___ your charger?', a: 'borrow', w: ['lend', 'borrowed'], why: 'You borrow from someone.', how: ['You are taking it for a while.', 'Borrow.']},
+  {q: 'She ___ the book on the table yesterday.', a: 'laid', w: ['lay', 'layed'], trap: 'lay', why: 'Lay (put) → laid. Lie (recline) → lay.', how: ['She put the book down: that\'s "to lay".', 'Past of lay = laid.']},
+]);
+addStatic('wd', 'words', 2, 'Verbal', 'odd-one-out', [
+  {q: 'Which is the odd one out: whale, dolphin, seal, shark?', a: 'shark', w: ['whale', 'dolphin', 'seal'], why: 'The others are mammals; a shark is a fish.', how: ['All four live in the sea, so look deeper.', 'Whales, dolphins and seals are mammals. Sharks are fish.']},
+  {q: 'Which is the odd one out: tomato, cucumber, carrot, pepper?', a: 'carrot', w: ['tomato', 'cucumber', 'pepper'], why: 'The others are botanically fruits (they hold seeds); a carrot is a root.', how: ['Ask where the seeds are.', 'Tomato, cucumber and pepper carry seeds. Carrot is a root.']},
+  {q: 'Which is the odd one out: penguin, ostrich, eagle, emu?', a: 'eagle', w: ['penguin', 'ostrich', 'emu'], why: 'The others can\'t fly.', how: ['All are birds, so look for another property.', 'Only the eagle flies.']},
+  {q: 'Which is the odd one out: Mercury, Venus, Pluto, Mars?', a: 'Pluto', w: ['Mercury', 'Venus', 'Mars'], why: 'Pluto is classed as a dwarf planet.', how: ['All orbit the Sun.', 'Since 2006 Pluto is a dwarf planet; the others are planets.']},
+  {q: 'Which is the odd one out: spider, ant, bee, beetle?', a: 'spider', w: ['ant', 'bee', 'beetle'], why: 'Spiders have eight legs; insects have six.', how: ['Count legs.', 'Spiders are arachnids (8 legs), the rest are insects (6).']},
+  {q: 'Which is the odd one out: square, rectangle, rhombus, triangle?', a: 'triangle', w: ['square', 'rectangle', 'rhombus'], why: 'The others have four sides.', how: ['Count sides.', 'Only the triangle has three.']},
+]);
+
+// ── Data & stats ──
+const listOf = (r, n, lo, hi) => Array.from({length: n}, () => ri(r, lo, hi));
+fam('d-mean', 'data', 1, 'Averages', 'mean-median', [['test scores'], ['daily steps (thousands)'], ['delivery times (minutes)'], ['ages']], (r, [what]) => {
+  const n = ri(r, 4, 6); let xs; do { xs = listOf(r, n, 2, 40); } while (xs.reduce((a, b) => a + b, 0) % n);
+  const sum = xs.reduce((a, b) => a + b, 0), mean = sum / n, sorted = xs.slice().sort((a, b) => a - b), med = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  return {q: `What is the mean (average) of these ${what}: ${xs.join(', ')}?`, ans: fmt(mean), trap: fmt(med) === fmt(mean) ? fmt(mean + 1) : fmt(med), wrong: [fmt(sum), fmt(Math.round(sum / (n - 1)))],
+    why: 'Mean = total ÷ how many.', how: [`Total: ${xs.join(' + ')} = ${sum}.`, `${sum} ÷ ${n} = ${fmt(mean)}.`]};
+});
+fam('d-median', 'data', 2, 'Averages', 'mean-median', ['odd', 'even'], (r, kind) => {
+  const n = kind === 'odd' ? pk(r, [5, 7]) : pk(r, [4, 6]), xs = listOf(r, n, 1, 50), s = xs.slice().sort((a, b) => a - b);
+  const med = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2, mean = xs.reduce((a, b) => a + b, 0) / n;
+  return {q: `What is the median of: ${xs.join(', ')}?`, ans: fmt(med), trap: fmt(n % 2 ? xs[(n - 1) / 2] : (xs[n / 2 - 1] + xs[n / 2]) / 2) === fmt(med) ? fmt(Math.round(mean * 10) / 10) : fmt(n % 2 ? xs[(n - 1) / 2] : (xs[n / 2 - 1] + xs[n / 2]) / 2), wrong: [fmt(Math.round(mean * 10) / 10), fmt(med + 2)],
+    why: 'Median = the middle value once sorted.', how: [`Sort first: ${s.join(', ')}.`, n % 2 ? `The middle (${(n + 1) / 2}th) value is ${med}.` : `Two middle values: ${s[n / 2 - 1]} and ${s[n / 2]}, average ${fmt(med)}.`, 'Taking the middle of the unsorted list is the trap.']};
+});
+fam('d-mode-range', 'data', 1, 'Averages', 'mean-median', ['mode', 'range'], (r, kind) => {
+  const xs = listOf(r, 6, 1, 15); const m = pk(r, xs); xs.push(m, m); const s = xs.slice().sort((a, b) => a - b);
+  const counts = {}; xs.forEach(x => counts[x] = (counts[x] || 0) + 1); const top = Math.max(...Object.values(counts)), modes = Object.keys(counts).filter(k => counts[k] === top);
+  if (kind === 'mode') { if (modes.length > 1) return null; return {q: `What is the mode of: ${xs.join(', ')}?`, ans: modes[0], trap: String(s[Math.floor(s.length / 2)]) === modes[0] ? String(s[0]) : String(s[Math.floor(s.length / 2)]), wrong: [String(Math.max(...xs)), String(xs.length)], why: 'Mode = the most frequent value.', how: [`Count each value: ${Object.keys(counts).map(k => k + '×' + counts[k]).join(', ')}.`, `${modes[0]} appears most (${top} times).`]}; }
+  const rg = s[s.length - 1] - s[0]; return {q: `What is the range of: ${xs.join(', ')}?`, ans: rg, trap: s[s.length - 1], wrong: [rg + 1, s.length], why: 'Range = largest − smallest.', how: [`Largest ${s[s.length - 1]}, smallest ${s[0]}.`, `${s[s.length - 1]} − ${s[0]} = ${rg}.`]};
+});
+fam('d-outlier', 'data', 2, 'Averages', 'mean-median', [['salaries in a small office', 'the boss\'s'], ['house prices on a street', 'a mansion\'s'], ['ages at a kids\' party', 'a grandparent\'s']], (r, [what, big]) => {
+  return {q: `You add ${big} value to a list of ${what}. Which changes more?`, ans: 'The mean', trap: 'The median', wrong: ['Both change equally', 'Neither changes'],
+    why: 'One extreme value drags the mean but barely moves the middle.', how: ['The mean adds up every value, so one huge number pulls it up a lot.', 'The median is just the middle position, which shifts by at most one place.', 'That\'s why "median income" is often more honest than "average income".']};
+});
+fam('d-weighted', 'data', 3, 'Averages', 'weighted-avg', [['Class A', 'students', 'average score'], ['Store A', 'sales days', 'daily revenue ($)'], ['Team A', 'players', 'average rating']], (r, [A, unit, metric]) => {
+  const n1 = pk(r, [10, 20, 30, 40]), n2 = pk(r, [10, 20, 30, 60]), a = ri(r, 50, 80), b = ri(r, 60, 95); if (a === b || n1 === n2) return null;
+  const w = (n1 * a + n2 * b) / (n1 + n2); if (w % 1 && (w * 10) % 1) return null;
+  return {q: `${A} has ${n1} ${unit} with ${metric} ${a}. ${A.replace('A', 'B')} has ${n2} ${unit} with ${metric} ${b}. What's the combined ${metric}?`, ans: fmt(w), trap: fmt((a + b) / 2), wrong: [fmt(w + 3), fmt(a + b)],
+    why: 'Weight each group by its size.', how: [`Totals: ${n1} × ${a} = ${fmt(n1 * a)} and ${n2} × ${b} = ${fmt(n2 * b)}.`, `${fmt(n1 * a + n2 * b)} ÷ ${n1 + n2} = ${fmt(w)}.`, `${fmt((a + b) / 2)} ignores that the groups are different sizes.`]};
+});
+fam('d-share', 'data', 2, 'Charts', 'share', [['Sales by region', ['North', 'South', 'East', 'West']], ['Votes by party', ['Red', 'Blue', 'Green', 'Gold']], ['Traffic by source', ['Search', 'Social', 'Email', 'Direct']]], (r, [title, labels]) => {
+  let vals; do { vals = labels.map(() => pk(r, [10, 15, 20, 25, 30, 40, 50, 60])); } while ((vals.reduce((a, b) => a + b, 0)) % 20 && (vals.reduce((a, b) => a + b, 0)) % 25);
+  const tot = vals.reduce((a, b) => a + b, 0), i = ri(r, 0, 3), share = vals[i] / tot * 100;
+  return {q: `${title}: ${labels.map((l, j) => l + ' ' + vals[j]).join(', ')}. What share is ${labels[i]}?`, ans: pct1(share), trap: pct1(vals[i] / (tot - vals[i]) * 100), wrong: [pct1(25), pct1(share + 10)],
+    why: 'Share = part ÷ total.', how: [`Total: ${vals.join(' + ')} = ${tot}.`, `${vals[i]} ÷ ${tot} = ${fmt(Math.round(share * 10) / 1000)}.`, `= ${pct1(share)}.`]};
+});
+fam('d-scale-sample', 'data', 2, 'Sampling', 'sampling', [['said they\'d use a new bus route', 'a town of'], ['own a pet', 'a city of'], ['would buy the product', 'a market of']], (r, [result, place]) => {
+  const n = pk(r, [100, 200, 400, 500]), k = pk(r, [10, 20, 25, 30, 40]), x = n * k / 100, P = pk(r, [10000, 20000, 50000, 100000]), ans = P * k / 100;
+  return {q: `In a random survey of ${n} people, ${x} ${result}. Roughly how many is that in ${place} ${fmt(P)}?`, ans: fmt(ans), trap: fmt(x), wrong: [fmt(ans / 10), fmt(P - ans)],
+    why: 'Scale the sample\'s rate up to the population.', how: [`Rate: ${x} ÷ ${n} = ${k}%.`, `${k}% of ${fmt(P)} = ${fmt(ans)}.`, 'This only works if the sample was random and representative.']};
+});
+fam('d-both', 'data', 3, 'Probability', 'independent', [['Rain on Saturday', 'rain on Sunday'], ['A flight delay', 'a late connecting train'], ['Server A failing', 'server B failing']], (r, [e1, e2]) => {
+  const p1 = pk(r, [10, 20, 30, 40, 50]), p2 = pk(r, [10, 20, 30, 50, 60]), both = p1 * p2 / 100, either = p1 + p2 - both, askBoth = r() < 0.5;
+  return askBoth ? {q: `${e1} has a ${p1}% chance, and independently, ${e2} has a ${p2}% chance. Chance both happen?`, ans: pct1(both), trap: pct1(p1 + p2), wrong: [pct1((p1 + p2) / 2), pct1(Math.min(p1, p2))], why: 'Independent events: multiply.', how: [`${p1 / 100} × ${p2 / 100} = ${fmt(both / 100)}.`, `= ${pct1(both)}.`]}
+    : {q: `${e1} has a ${p1}% chance, and independently, ${e2} has a ${p2}% chance. Chance at least one happens?`, ans: pct1(either), trap: pct1(p1 + p2), wrong: [pct1(both), pct1(Math.max(p1, p2))], why: 'At least one = 1 − neither.', how: [`Neither: ${(100 - p1) / 100} × ${(100 - p2) / 100} = ${fmt((100 - p1) * (100 - p2) / 10000)}.`, `At least one: 1 − that = ${pct1(either)}.`, `Adding (${p1 + p2}%) double-counts the times both happen.`]};
+});
+fam('d-ev', 'data', 3, 'Probability', 'ev', [['A game pays', 'if you roll a 6'], ['A bet pays', 'if a coin lands heads twice in a row'], ['A contest pays', 'if you draw the ace of spades']], (r, [game, cond]) => {
+  const p = cond.includes('6') ? [1, 6] : cond.includes('heads') ? [1, 4] : [1, 52], prize = pk(r, [10, 20, 30, 60, 120]), cost = pk(r, [2, 3, 5]);
+  const ev = prize * p[0] / p[1] - cost;
+  return {q: `${game} ${usd(prize)} ${cond}. It costs ${usd(cost)} to play. Expected value per play?`, ans: (ev >= 0 ? '+' : '−') + m2(Math.abs(ev)), trap: '+' + m2(prize - cost), wrong: [(ev >= 0 ? '−' : '+') + m2(Math.abs(ev)), m2(prize * p[0] / p[1])],
+    why: 'Average payout minus cost.', how: [`Chance of winning: ${p[0]}/${p[1]}.`, `Average payout: ${usd(prize)} × ${p[0]}/${p[1]} = ${m2(prize / p[1])}.`, `Minus ${usd(cost)}: ${(ev >= 0 ? '+' : '−') + m2(Math.abs(ev))}.`]};
+});
+fam('d-rates', 'data', 2, 'Rates', 'rates-per', [['cases of flu', 'town'], ['bike thefts', 'city'], ['support tickets', 'customer base']], (r, [what, place]) => {
+  const pa = pk(r, [10000, 20000, 50000]), pb = pk(r, [30000, 60000, 100000, 200000]); if (pa === pb) return null;
+  const ra = pk(r, [2, 3, 4, 5, 6]), rb = pk(r, [1, 2, 3, 4, 5]); if (ra === rb) return null;
+  const ca = pa * ra / 1000, cb = pb * rb / 1000, ans = ra > rb ? `${cap(place)} A` : `${cap(place)} B`;
+  if ((ca > cb) === (ra > rb)) return null; // only ask when raw counts mislead
+  return {q: `${cap(place)} A (population ${fmt(pa)}) had ${fmt(ca)} ${what}. ${cap(place)} B (population ${fmt(pb)}) had ${fmt(cb)}. Which has the higher rate?`, ans, trap: ans.endsWith('A') ? `${cap(place)} B` : `${cap(place)} A`, wrong: ['The same', 'Can\'t compare different sizes'],
+    why: 'Compare per person, not raw counts.', how: [`A: ${fmt(ca)} ÷ ${fmt(pa)} = ${ra} per 1,000.`, `B: ${fmt(cb)} ÷ ${fmt(pb)} = ${rb} per 1,000.`, `${ans} is higher, even though its raw count is lower.`]};
+});
+fam('d-percentile', 'data', 2, 'Rankings', 'percentile', [['test', 'people'], ['race', 'runners'], ['typing contest', 'entrants']], (r, [what, who]) => {
+  const N = pk(r, [200, 400, 500, 1000]), p = pk(r, [40, 60, 75, 80, 90, 95]), below = N * p / 100;
+  return {q: `In a ${what} with ${N} ${who}, you did better than ${below} of them. What percentile are you in?`, ans: `${ORD(p)}`, trap: `${ORD(100 - p)}`, wrong: [`${ORD(Math.round(below / 10))}` === `${ORD(p)}` ? `${ORD(p - 5)}` : `${ORD(Math.round(below / 10))}`, `${ORD(Math.min(99, p + 5))}`],
+    why: 'Percentile = share of people you beat.', how: [`${below} ÷ ${N} = ${p / 100}.`, `So the ${ORD(p)} percentile.`]};
+});
+fam('d-zscore', 'data', 4, 'Spread', 'zscore', [['exam score', 'points'], ['height', 'cm'], ['monthly sales', 'units']], (r, [what, unit]) => {
+  const mean = pk(r, [50, 60, 70, 170, 200]), sd = pk(r, [5, 8, 10, 20]), z = pk(r, [-2, -1.5, -1, 1, 1.5, 2, 2.5]), x = mean + z * sd;
+  return {q: `${/^[aeiou]/.test(what) ? 'An' : 'A'} ${what} of ${fmt(x)} ${unit}, where the mean is ${mean} and the standard deviation is ${sd}. How many standard deviations from the mean is it?`, ans: (z > 0 ? '+' : '') + fmt(z), trap: (z > 0 ? '+' : '') + fmt(x - mean), wrong: [(z > 0 ? '−' : '+') + fmt(Math.abs(z)), (z > 0 ? '+' : '') + fmt(z * 2)],
+    why: 'z = (value − mean) ÷ SD.', how: [`${fmt(x)} − ${mean} = ${fmt(x - mean)}.`, `÷ ${sd} = ${fmt(z)}.`]};
+});
+fam('d-spread', 'data', 2, 'Spread', 'spread', null, r => {
+  const m = ri(r, 10, 30), tight = [m - 1, m, m, m + 1, m - 1, m + 1].slice(0, 5), wide = [m - 8, m + 6, m - 2, m + 9, m - 5];
+  const sWide = wide.slice(), sTight = tight.slice(), AisWide = r() < 0.5, A = AisWide ? sWide : sTight, B = AisWide ? sTight : sWide;
+  return {q: `Set A: ${A.join(', ')}. Set B: ${B.join(', ')}. Which set is more spread out?`, ans: AisWide ? 'Set A' : 'Set B', trap: 'Same spread, the averages are close', wrong: [AisWide ? 'Set B' : 'Set A', 'Can\'t tell without a chart'],
+    why: 'Similar averages can hide very different spreads.', how: [`Range of A: ${Math.max(...A) - Math.min(...A)}. Range of B: ${Math.max(...B) - Math.min(...B)}.`, `Both centre near ${m}, but ${AisWide ? 'A' : 'B'}'s values sit much further from it.`]};
+});
+fam('d-moving', 'data', 2, 'Trends', 'moving-avg', ['daily signups', 'daily sales', 'daily visitors'], (r, what) => {
+  let xs; do { xs = listOf(r, 6, 10, 60); } while ((xs[3] + xs[4] + xs[5]) % 3);
+  const ma = (xs[3] + xs[4] + xs[5]) / 3, all = xs.reduce((a, b) => a + b, 0) / 6;
+  return {q: `${cap(what)} for 6 days: ${xs.join(', ')}. What's the 3-day moving average on day 6?`, ans: fmt(ma), trap: fmt(Math.round(all * 10) / 10) === fmt(ma) ? fmt(ma + 2) : fmt(Math.round(all * 10) / 10), wrong: [fmt(xs[5]), fmt((xs[0] + xs[1] + xs[2]) / 3 % 1 ? Math.round((xs[0] + xs[1] + xs[2]) / 3) : (xs[0] + xs[1] + xs[2]) / 3)],
+    why: 'Average just the last 3 days.', how: [`Last 3 days: ${xs[3]}, ${xs[4]}, ${xs[5]}.`, `(${xs[3]} + ${xs[4]} + ${xs[5]}) ÷ 3 = ${fmt(ma)}.`]};
+});
+fam('d-cagr', 'data', 3, 'Trends', 'compounding', [['Revenue', 'doubled'], ['Users', 'doubled'], ['A city\'s population', 'doubled']], (r, [what]) => {
+  const y = pk(r, [3, 4, 6, 8, 9, 12]), g = 72 / y;
+  return {q: `${what} doubled in ${y} years. Roughly what yearly growth rate is that?`, ans: `~${fmt(g)}%`, trap: `~${fmt(Math.round(100 / y * 10) / 10)}%`, wrong: [`~${fmt(g * 2)}%`, `~${y}%`],
+    why: 'Rule of 72 backwards: rate ≈ 72 ÷ years.', how: [`Rate ≈ 72 ÷ ${y} = ${fmt(g)}%.`, `${fmt(Math.round(100 / y * 10) / 10)}% (100 ÷ years) ignores compounding.`]};
+});
+fam('d-base-rate2', 'data', 4, 'Probability', 'base-rate', [['a disease', 'test'], ['fraud', 'fraud alert'], ['a defective part', 'quality scanner']], (r, [cond, test]) => {
+  const prev = pk(r, [1, 2, 5]), N = 1000, sick = N * prev / 100, fpRate = pk(r, [5, 10]), fp = Math.round((N - sick) * fpRate / 100), ans = Math.round(sick / (sick + fp) * 100);
+  return {q: `${cap(cond)} affects ${prev}% of cases. A ${test} catches every real case but wrongly flags ${fpRate}% of normal ones. If something is flagged, roughly how likely is it real?`, ans: `~${ans}%`, trap: `~${100 - fpRate}%`, wrong: [`~${prev}%`, `~${Math.min(99, ans * 2)}%`],
+    why: 'Most flags come from the much bigger normal group.', how: [`Imagine ${N}: ${sick} real, ${N - sick} normal.`, `Flags: ${sick} real + ${fp} false (${fpRate}% of ${N - sick}).`, `${sick} ÷ ${sick + fp} ≈ ${ans}%.`]};
+});
+
+addStatic('dt', 'data', 2, 'Reading data', 'correlation', [
+  {q: 'Countries that eat more chocolate win more Nobel prizes. Best explanation?', a: 'Wealth drives both', w: ['Chocolate makes people smarter', 'Nobel winners buy chocolate', 'It proves nothing about anything'], trap: 'Chocolate makes people smarter', why: 'Richer countries spend more on both chocolate and research.'},
+  {q: 'A chart shows sales rising every December. What\'s the most likely reason?', a: 'Seasonality (holiday shopping)', w: ['The marketing team is better in December', 'A data error', 'Random luck'], k: 'moving-avg', why: 'Regular yearly patterns are seasonality.'},
+  {q: 'Average income in a bar is $50,000. A billionaire walks in. What happens to the median income?', a: 'Barely changes', w: ['Jumps to millions', 'Drops', 'Becomes undefined'], trap: 'Jumps to millions', k: 'mean-median', why: 'One extreme value moves the mean, not the middle.'},
+  {q: 'Which chart is best for showing change over time?', a: 'Line chart', w: ['Pie chart', 'Scatter plot', 'Word cloud'], k: 'share', why: 'Lines show trends across time.'},
+  {q: 'Which chart is best for showing parts of a whole, with few categories?', a: 'Pie or stacked bar', w: ['Line chart', 'Scatter plot', 'Histogram'], k: 'share', why: 'They show shares that add to 100%.'},
+  {q: 'A survey only asked people at a gym about exercise habits. The result will likely…', a: 'Overstate how much people exercise', w: ['Be perfectly accurate', 'Understate exercise', 'Be random'], k: 'sampling', why: 'The sample isn\'t representative.'},
+  {q: 'Correlation of 0.9 between two variables means…', a: 'They move together strongly; one doesn\'t necessarily cause the other', w: ['One causes the other', '90% of the data is correct', 'They\'re unrelated'], trap: 'One causes the other', why: 'Strong correlation, still not causation.'},
+  {q: 'A 95% confidence interval for average height is 170–174 cm. Best reading?', a: 'The method gives ranges that contain the true average 95% of the time', w: ['95% of people are 170–174 cm', 'The average is exactly 172 cm', 'There\'s a 5% error in every measurement'], trap: '95% of people are 170–174 cm', k: 'spread', why: 'It\'s about the average, not individuals.'},
+  {q: 'You flip a coin 10 times and get 7 heads. Is the coin biased?', a: 'Not enough evidence; 7 of 10 happens often by chance', w: ['Yes, 70% is too high', 'Yes, heads is luckier', 'No, coins are always fair'], k: 'sample-size', why: 'Small samples swing a lot.'},
+  {q: 'A dashboard shows "users up 300%" since launch. What\'s the first question to ask?', a: 'Up from how many?', w: ['Which colour is the chart?', 'Who made the dashboard?', 'Is 300% good?'], k: 'sample-size', why: 'From 10 to 40 is +300% but tiny.'},
+]);
+
 const concept = k => ({key: k, name: (CONCEPTS[k] || ['Trick', ''])[0], rule: (CONCEPTS[k] || ['', ''])[1]});
 
 // ───────────────── Lessons: 2-minute reads that end in a drill ─────────────────
@@ -1271,6 +2414,32 @@ const LESSONS = [
    steps:['WHERE filters rows before GROUP BY. HAVING filters groups after.','COUNT(col) skips NULLs. COUNT(*) counts rows.','Check the row count after every join.'],
    ex:'If COUNT(email) is lower than COUNT(*), some users have no email. A report built on COUNT(email) quietly undercounts.'},
 ];
+LESSONS.push(
+  {id:'words-1', t:'words', title:'Read like an editor', mins:2, k:['confusables','agreement','spelling'],
+   ai:'AI writes fluent text, and it still slips on homophones and agreement when people paste and edit it. Catching those in seconds is what makes your writing look careful.',
+   steps:['Expand contractions to test them: it\'s = it is, they\'re = they are, who\'s = who is.','Find the real subject of the verb. Ignore the words in between.','With either/or and neither/nor, match the verb to the nearer subject.'],
+   ex:'"Neither the players nor the coach ___ happy." The nearer subject is "the coach", so: is.'},
+  {id:'words-2', t:'words', title:'Vocabulary that sticks', mins:2, k:['synonyms','antonyms','one-word','idioms'],
+   ai:'If you can\'t judge word choice, you can\'t judge whether an AI draft says what you mean. A sharp vocabulary is your editing edge.',
+   steps:['Test a synonym by swapping it into a real sentence.','For opposites, flip the meaning, not just the word.','Learn roots: biblio = book, phil = love, omni = all.'],
+   ex:'"Bibliophile" = biblio (book) + phil (love): someone who loves books.'},
+  {id:'words-3', t:'words', title:'Word patterns', mins:3, k:['anagram','compounds','alpha-order','palindrome','word-count'],
+   ai:'Chatbots famously miscount letters because they see chunks of words, not letters. Slow, letter-by-letter reading beats them.',
+   steps:['Count letters by pointing at each one; doubles are where errors hide.','For anagrams, sort the letters of both words alphabetically.','For alphabetical order, compare letter by letter; a word that starts another comes first.'],
+   ex:'"listen" and "silent" both sort to e-i-l-n-s-t, so they\'re anagrams.'},
+  {id:'data-1', t:'data', title:'Averages that lie', mins:2, k:['mean-median','weighted-avg','spread'],
+   ai:'AI summaries love "the average". Knowing when the average misleads is what separates an analyst from a dashboard.',
+   steps:['Mean = total ÷ count. Median = the middle value once sorted.','One extreme value drags the mean but barely moves the median.','Combine groups with totals, never by averaging their averages.'],
+   ex:'Class A: 40 students averaging 53. Class B: 60 averaging 77. Combined: (2,120 + 4,620) ÷ 100 = 67.4, not 65.'},
+  {id:'data-2', t:'data', title:'Rates and percentages', mins:2, k:['pct-points','rates-per','share','percent-change'],
+   ai:'Most misleading charts use real numbers framed badly. Spotting points vs percent, and counts vs rates, keeps you from being fooled by anyone, human or AI.',
+   steps:['Percent change = change ÷ the starting value.','From 4% to 5% is +1 percentage point but +25% relative.','Compare places of different sizes per person, not by raw counts.'],
+   ex:'Town A: 80 cases in 20,000 (4 per 1,000). Town B: 180 in 60,000 (3 per 1,000). A is worse despite fewer cases.'},
+  {id:'data-3', t:'data', title:'Chance and expectations', mins:3, k:['independent','ev','base-rate','sampling'],
+   ai:'Probability is where confident answers go wrong most often. Counting cases on paper is a method you can always trust.',
+   steps:['Independent events both happening: multiply. At least one: 1 − neither.','Expected value = sum of (outcome × chance) minus the cost.','Start from the base rate before trusting any alert or test.'],
+   ex:'A $2 game paying $10 on a six: 10 × 1/6 = $1.67 back on average, so you lose $0.33 per play.'},
+);
 const lessonsFor = t => t === 'mix' ? LESSONS.filter(l => l.id.endsWith('-1') && l.t !== 'code') : LESSONS.filter(l => l.t === t);
 
 // ───────────────── Ads ─────────────────
@@ -1808,11 +2977,12 @@ function renderStreak() {
 function renderArenas() {
   $('#arena-grid').innerHTML = TRACKS.map(t => {
     const h = highest(t.id); const stars = Object.values(lv(t.id)).reduce((a, b) => a + b, 0);
-    const pool = Q.filter(q => t.id === 'mix' ? q.t !== 'code' : q.t === t.id).length;
+    const inT = x => t.id === 'mix' ? x.t !== 'code' : x.t === t.id;
+    const pool = Q.filter(inT).length + G.filter(inT).length;
     return `<button class="arena ${t.id === track ? 'on' : ''} ${t.id === 'mix' ? 'wide' : ''}" data-t="${t.id}" aria-pressed="${t.id === track}">
       <div class="arena-top"><span class="arena-name">${esc(t.name)}</span>${t.id === track ? '<span class="arena-sel">Selected</span>' : ''}</div>
       <div class="arena-who">${esc(t.who)}</div>
-      <div class="arena-for">${esc(t.forWho)} · ${pool} questions</div>
+      <div class="arena-for">${esc(t.forWho)} · ${pool} question formats</div>
       <div class="arena-prog"><div class="arena-bar"><div style="width:${(h / LEVELS.length) * 100}%"></div></div>
       <div class="arena-meta"><span>Level ${Math.min(LEVELS.length, h + 1)} of ${LEVELS.length}</span><b>${stars ? stars + ' ★' : ''}</b></div></div>
     </button>`;
