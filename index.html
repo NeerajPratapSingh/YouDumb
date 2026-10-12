@@ -209,6 +209,9 @@ section { padding-block: 48px; }
 @media (max-width: 820px) { .pb-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .pb-grid { grid-template-columns: 1fr; } .pb-empty { grid-column: auto; } }
 
+.how { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); }
+.how .steps li { font-size: 0.92rem; color: var(--fg); }
+.how .trick-label { color: var(--win); }
 /* Lessons */
 .lessons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .lesson-card { text-align: left; cursor: pointer; padding: 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; font: inherit; color: inherit; transition: border-color .15s, transform .15s; }
@@ -733,6 +736,460 @@ const K = {
   'relative-risk':[100], 'dev-basics':[101,102,103,105], sql:[104,111], loops:[106],
 };
 Object.entries(K).forEach(([k, ids]) => ids.forEach(id => { const q = Q.find(x => x.id === id); if (q) q.k = k; }));
+
+// ───────────────── Step-by-step solutions for the fixed questions ─────────────────
+const HOW = {
+  1: ['10% of 80 = 8 (move the decimal one place).', '5% is half of that: 4.', '15% = 8 + 4 = 12.'],
+  2: ['"All but 9 run away" means everyone except 9 left.', 'So exactly 9 sheep stay.', 'The 17 is a distraction. No subtraction needed.'],
+  3: ['The question asks which months have 28 days, not which have only 28.', 'Every month reaches day 28.', 'So all 12 do.'],
+  4: ['7 × 8 = 7 × 7 + 7.', '49 + 7 = 56.'],
+  5: ['Overtaking someone means you take their exact position.', 'They were 2nd, so now you are 2nd and they are 3rd.', 'You would have to pass the leader to be 1st.'],
+  6: ['Line the decimals up: 9.11 vs 9.90.', 'Compare the tenths digit: 1 vs 9.', '9 is bigger, so 9.9 wins.'],
+  7: ['Spell it out: s-t-r-a-w-b-e-r-r-y.', 'One r after the t, then two more in "rr".', '1 + 2 = 3.'],
+  8: ['An hour has 60 minutes, and each minute has 60 seconds.', '60 × 60 = 3,600.'],
+  9: ['Ask for the source: brain scans show activity across almost every region.', 'Damage to almost any area causes problems, which wouldn\'t happen if 90% sat idle.', 'So it\'s false.'],
+  10: ['One side of the + is a string: "5".', 'When either side is a string, JavaScript joins text instead of adding numbers.', '"5" + "3" gives "53".'],
+  11: ['Check the ratio between terms: 4 ÷ 2 = 2, 8 ÷ 4 = 2, 16 ÷ 8 = 2.', 'It doubles each time.', '16 × 2 = 32.'],
+  12: ['Do it in the order written: half of 2 = 1.', 'Then add 2: 1 + 2 = 3.'],
+  13: ['Let the ball cost x. The bat costs x + $1.00.', 'x + (x + 1.00) = 1.10, so 2x = 0.10.', 'x = $0.05. Check: $0.05 + $1.05 = $1.10.'],
+  14: ['5 machines make 5 widgets in 5 minutes, so one machine makes one widget in 5 minutes.', '100 machines work in parallel, each making one widget in 5 minutes.', '100 widgets in 5 minutes.'],
+  15: ['The area doubles every day.', 'Full on day 48 means half that size one day earlier.', 'Day 47.'],
+  16: ['25 × 4 = 100.', '24 = 4 × 6, so 25 × 24 = 100 × 6.', '= 600.'],
+  17: ['Count the characters: "hello" = 5, the space = 1, "world" = 5.', '5 + 1 + 5 = 11.'],
+  18: ['// is floor division: divide, then round down.', '3 ÷ 2 = 1.5, rounded down = 1.', 'Both inputs are whole numbers, so the result is the integer 1.'],
+  19: ['Days ≈ years × 365.', '30 × 365 = 10,950.', 'Closest option: about 11,000.'],
+  20: ['Tall, pointed structures attract lightning again and again.', 'The Empire State Building is hit about 20+ times a year.', 'So the saying is false.'],
+  21: ['Read the first words again: "Mary\'s father".', 'So Mary is one of his daughters.', 'Nana, Nene, Nini, Nono and Mary make five.'],
+  22: ['Picture circles: all bloops sit inside the razzies circle.', 'All razzies sit inside the lazzies circle.', 'So bloops are inside lazzies too. Yes.'],
+  23: ['Group the thousands: 4 × 1000 = 4000.', 'Group the rest: 40 + 30 + 20 + 10 = 100.', '4000 + 100 = 4100.'],
+  24: ['A resting heart beats about 70 times a minute.', 'A day has 60 × 24 = 1,440 minutes.', '70 × 1,440 ≈ 100,000.'],
+  25: ['Ask what pushes both numbers up at the same time.', 'Hot weather means more ice cream and more swimming.', 'More swimming means more drownings. The weather is the shared cause.'],
+  26: ['Each number is the sum of the two before it: 3 + 5 = 8.', '5 + 8 = 13.'],
+  27: ['Pair the ends: 1 + 100 = 101, 2 + 99 = 101, and so on.', 'There are 50 such pairs.', '50 × 101 = 5,050.'],
+  28: ['Split 23 into 20 + 3.', '17 × 20 = 340 and 17 × 3 = 51.', '340 + 51 = 391.'],
+  29: ['"One of them is not a nickel" doesn\'t say neither is.', 'The other coin can still be the nickel.', 'Quarter (25¢) + nickel (5¢) = 30¢.'],
+  30: ['List equally likely families: BB, BG, GB, GG.', '"At least one boy" rules out GG, leaving 3.', 'Only BB has two boys: 1 in 3.'],
+  31: ['Computers store 0.1 and 0.2 in binary, which can\'t hold them exactly.', 'Their sum comes out as 0.30000000000000004.', 'That isn\'t exactly 0.3, so === gives false.'],
+  32: ['* on a list repeats the list. It doesn\'t multiply each item.', 'So you get [1, 2, 3] twice in a row.', '[1, 2, 3, 1, 2, 3].'],
+  33: ['Your first pick is right 1/3 of the time, so the other two doors hide the car 2/3 of the time.', 'The host always opens a goat door from those two.', 'That whole 2/3 now sits on the one door left. Switch.'],
+  34: ['Start with 100.', '+50% gives 150. Then −50% of 150 gives 75.', '75 is 25% lower than 100.'],
+  35: ['A year has about 365 × 24 × 3,600 ≈ 31.5 million seconds.', '1,000,000,000 ÷ 31,500,000 ≈ 31.7.', 'About 32 years.'],
+  36: ['Ask how many people: 30 is far too few to trust a 40% difference.', 'Ask compared with what, and which way the cause runs.', 'Tiny sample, and likely no causation.'],
+  37: ['Read the key word again: survivors.', 'Survivors are alive.', 'You don\'t bury them anywhere.'],
+  38: ['Pick a distance, say 60 km.', 'Going takes 60 ÷ 60 = 1 h. Coming back takes 60 ÷ 30 = 2 h.', 'Total 120 km in 3 h = 40 km/h.'],
+  39: ['Binary search halves the remaining range each step.', 'Halving n repeatedly takes about log₂ n steps.', 'So O(log n).'],
+  40: ['The minute hand at 15 minutes is at 90°.', 'The hour hand moves 0.5° per minute: at 3:15 it\'s at 90° + 7.5° = 97.5°.', 'The difference is 7.5°.'],
+  41: ['Lighting both ends puts two flames on the same rope.', 'Wherever they meet, they\'ve burned 60 minutes of rope at double speed.', '60 ÷ 2 = 30 minutes.'],
+  42: ['The data only includes planes that made it back.', 'Planes hit in the engine or cockpit didn\'t return, so those hits are missing.', 'Put armor where the returning planes were not hit.'],
+  43: ['1/3 = 0.333…', 'Multiply both sides by 3: 3/3 = 0.999…', '3/3 is 1, so 0.999… = 1.'],
+  44: ['bool() on a string only checks whether it is empty.', '"False" has 5 characters, so it is not empty.', 'Non-empty strings are truthy, so True.'],
+  45: ['A locker is toggled once for each of its divisors.', 'Divisors come in pairs, except for perfect squares (9 = 3 × 3).', 'An odd number of toggles leaves it open: 1, 4, 9 … 100 makes 10.'],
+  46: ['Imagine 1,000 people: 1 is sick and tests positive.', 'Of the 999 healthy people, about 1% (≈10) test positive by mistake.', '1 real case out of about 11 positives ≈ 9%.'],
+  47: ['Each trailing zero needs a 10 = 2 × 5, and 5s are the scarce part.', 'Multiples of 5 up to 100: 20. Multiples of 25 add one more 5 each: 4.', '20 + 4 = 24.'],
+  48: ['[[]] * 3 puts the same inner list in all three slots.', 'Appending through x[0] changes that one shared list.', 'All three slots show it: [[1], [1], [1]].'],
+  49: ['Default .sort() converts items to strings first.', 'As text, "1" < "10" < "3" (compared character by character).', 'Result: [1, 10, 3].'],
+  50: ['Each fold doubles the thickness: 0.1 mm × 2⁴².', '2⁴² ≈ 4.4 trillion, so about 440 billion mm.', 'That\'s about 440,000 km, past the Moon (≈384,000 km).'],
+  51: ['Count pairs, not people: 23 people make 23 × 22 ÷ 2 = 253 pairs.', 'Each pair has a small chance of sharing a birthday.', 'With 253 chances, "no match at all" drops below 50%.'],
+  52: ['Every label is wrong, so the "Mixed" box holds only one kind of fruit.', 'Pull one fruit from it. If it\'s an apple, that box is Apples.', 'The box labelled Oranges can\'t be oranges, so it\'s Mixed. The last one is Oranges.'],
+  53: ['If A were a knight, "we are both knaves" would make A a knave. Contradiction.', 'So A is a knave, and the statement is false.', 'They are not both knaves, so B is a knight.'],
+  54: ['Chance of no 6 in one roll: 5/6.', 'No 6 in four rolls: (5/6)⁴ ≈ 0.482.', 'At least one 6: 1 − 0.482 ≈ 52%.'],
+  55: ['Price per pen: $9 ÷ 6 = $1.50.', '10 pens × $1.50 = $15.'],
+  56: ['Test a shared property: 3, 5, 7 and 11 are all prime.', '9 = 3 × 3 is not.', 'Odd one out: 9.'],
+  57: ['Say the link out loud: a book is used for reading.', 'A fork is used for eating.'],
+  58: ['Letter positions: A = 1, C = 3, E = 5, G = 7.', 'Each step adds 2, so next is 9 = I.'],
+  59: ['A does 1/10 of the job a day. B does 1/15.', 'Together: 3/30 + 2/30 = 5/30 = 1/6 of the job a day.', 'The whole job takes 6 days.'],
+  60: ['Convert the speed: 54 km/h × 5/18 = 15 m/s.', 'Passing a pole means covering the train\'s own length: 150 m.', '150 ÷ 15 = 10 s.'],
+  61: ['3:2 means 5 equal parts.', '40 ÷ 5 = 8 students per part.', 'Girls = 2 parts = 16.'],
+  62: ['C→D, A→B, T→U: every letter moves forward one.', 'D→E, O→P, G→H.', 'DOG becomes EPH.'],
+  63: ['"My mother\'s only daughter" is Riya herself.', 'So his mother is Riya.', 'He is her son.'],
+  64: ['Simple interest = principal × rate × years.', '$2,000 × 0.05 × 3 = $300.'],
+  65: ['Turn the changes into factors: ×1.2, then ×0.8.', '1.2 × 0.8 = 0.96.', '0.96 means 4% down.'],
+  66: ['A fills 1/4 of the tank an hour. B empties 1/6.', 'Net: 3/12 − 2/12 = 1/12 of the tank an hour.', 'Full in 12 hours.'],
+  67: ['Gaps: 4, 6, 8, 10, growing by 2 each time.', 'Next gap is 12.', '30 + 12 = 42.'],
+  68: ['Weekdays repeat every 7 days.', '100 ÷ 7 = 14 weeks, remainder 2.', 'Monday + 2 days = Wednesday.'],
+  69: ['The clock gains 5 minutes every real hour.', 'Noon to 6 pm is 6 hours, so it gains 30 minutes.', 'It shows 6:30.'],
+  70: ['Let the son be s and the father 4s.', 'In 20 years: 4s + 20 = 2(s + 20), so 4s + 20 = 2s + 40.', '2s = 20, so s = 10 and the father is 40.'],
+  71: ['Count by size: 64 squares of 1×1, 49 of 2×2, … 1 of 8×8.', 'That\'s 8² + 7² + … + 1².', 'Sum = 204.'],
+  72: ['5 letters can be arranged 5! = 120 ways.', 'L appears twice and E appears twice, so divide by 2! × 2! = 4.', '120 ÷ 4 = 30.'],
+  73: ['Conversion rate = signups ÷ visitors.', '50 ÷ 1,000 = 0.05 = 5%.'],
+  74: ['Profit = $10,000 − $7,000 = $3,000.', 'Margin = profit ÷ revenue = 3,000 ÷ 10,000.', '= 30%.'],
+  75: ['In product, MVP means Minimum Viable Product.', 'It\'s the smallest version that lets you learn from real users.'],
+  76: ['Acquisition is getting users. Activation is their first good experience.', 'Users coming back over time is retention.'],
+  77: ['Each month, 95% of the remaining users stay.', 'After 12 months: 0.95¹² ≈ 0.54.', 'About 54% remain, not 40%.'],
+  78: ['Payback = acquisition cost ÷ monthly revenue per customer.', '$60 ÷ $20 = 3 months.'],
+  79: ['Stickiness = daily users ÷ monthly users.', '20,000 ÷ 100,000 = 20%.'],
+  80: ['Turn the rates into counts: 4.2% of 200 ≈ 8, and 4.0% of 200 = 8.', '8 vs 8 conversions is no real difference.', 'There isn\'t enough data to call a winner.'],
+  81: ['Visitors to signups: 10,000 × 20% = 2,000.', 'Signups to paying: 2,000 × 10% = 200.'],
+  82: ['Goodhart\'s law is about measures turning into targets.', 'The others: Parkinson (work fills time), Murphy (things go wrong), Pareto (80/20).'],
+  83: ['Monthly profit per customer: $30 × 80% = $24.', 'Average lifetime: 1 ÷ 4% = 25 months.', '$24 × 25 = $600.'],
+  84: ['Year 1: 150 ÷ 100 = 1.5, so +50%.', 'Year 2: 225 ÷ 150 = 1.5, so +50% again.', 'The annual rate is 50%. 125% is the two-year total.'],
+  85: ['2% of users creating 30% of tickets means something there confuses people.', 'Deleting, hiring or ignoring all skip the diagnosis.', 'Find out why first.'],
+  86: ['About 4–5 billion people own a smartphone.', 'People replace phones roughly every 3–4 years.', '≈4.5 billion ÷ 3.5 ≈ 1.2–1.3 billion a year.'],
+  87: ['RICE = Reach × Impact × Confidence ÷ Effort.', '1,000 × 2 × 0.5 = 1,000.', '1,000 ÷ 4 = 250.'],
+  88: ['New price $110. New volume 1,000 × 0.85 = 850 units.', 'New revenue: $110 × 850 = $93,500.', 'Compared with $100,000, that\'s 6.5% down.'],
+  89: ['Overall averages weight each group by its size.', 'If B was mostly tried on the easier group, its overall number looks better.', 'That\'s Simpson\'s paradox: the group sizes differ.'],
+  90: ['The count settles when joins equal losses.', 'Losses are 10% of N, joins are 80.', '0.1 × N = 80, so N = 800.'],
+  91: ['Price per kg: $4.00 ÷ 0.5 kg = $8.00.', '$5.70 ÷ 0.75 kg = $7.60.', 'The 750 g pack is cheaper per gram.'],
+  92: ['Urgency + a link + "verify" is the classic phishing pattern.', 'Clicking could hand over your login.', 'Use the bank\'s official app or the number on your card.'],
+  93: ['Trials that need a card make money when people forget.', 'Set a cancel reminder for before the renewal date on the day you sign up.'],
+  94: ['$100 falls 50% to $50.', 'Getting back to $100 means the $50 has to double.', 'That\'s a 100% gain.'],
+  95: ['Each flip is independent. The coin has no memory.', 'Past results don\'t change the next flip.', 'Still exactly 50%.'],
+  96: ['Rule of 72: years to double ≈ 72 ÷ the annual rate.', '72 ÷ 9 = 8 years.'],
+  97: ['8,000,000,000 ÷ 1,000,000 = 8,000.', 'Rare per person still means thousands of people.'],
+  98: ['Ask how many were surveyed and who picked them.', 'Ask what they compared against, and whether they could recommend several brands.', 'Without that, "9 out of 10" says almost nothing.'],
+  99: ['Under the mattress: $200 × 12 × 30 = $72,000.', 'Invested at 7%: roughly $230–245k, because returns earn returns.', 'About 3× more.'],
+  100: ['Absolute drop: 2 in 10,000 − 1 in 10,000 = 1 in 10,000.', '1 ÷ 10,000 = 0.01%.', 'The "50%" is the relative change.'],
+  101: ['HTML stands for HyperText Markup Language.', 'It structures the content of every web page.'],
+  102: ['2xx means success (200 OK), 3xx a redirect (301), 4xx a client error, 5xx a server error.', '404 is Not Found.'],
+  103: ['A single = stores a value.', '== compares two values for equality.'],
+  104: ['SQL runs WHERE (filter rows), then GROUP BY, then HAVING (filter groups).', 'Filtering groups after grouping needs HAVING.'],
+  105: ['git branch new only creates the branch.', 'git checkout -b new creates it and switches to it.', 'git switch -c new does the same.'],
+  106: ['Trace i: 0, 3, 6, 9.', 'Next would be 12, which fails i < 10.', 'So the loop runs 4 times.'],
+  107: ['The inner loop runs n times for each of the outer loop\'s n runs.', 'n × n = n².'],
+  108: ['Python 3 rounds exact ties to the nearest even number (banker\'s rounding).', '2.5 sits exactly between 2 and 3, and 2 is even.', 'round(2.5) gives 2.'],
+  109: ['A bug in JavaScript\'s first version tagged null as an object.', 'Fixing it would break old websites, so it stayed.', 'typeof null is "object".'],
+  110: ['A hash map turns the key into an array position.', 'Jumping to that position takes the same time whatever the size.', 'O(1) on average.'],
+  111: ['COUNT(*) counts every row.', 'COUNT(col) counts only rows where col is not NULL.', 'So COUNT(col) skips NULLs.'],
+  112: ['Urgency + secrecy + gift cards is a scam pattern, even in a familiar voice.', 'AI can clone a voice from a short clip.', 'Hang up and call your boss on a number you already have.'],
+  113: ['4% a month compounds to about 60% a year (1.04¹² ≈ 1.6).', 'Returns that high always carry real risk.', '"Guaranteed" plus "zero risk" is the classic Ponzi pitch.'],
+};
+Q.forEach(q => { if (HOW[q.id]) q.how = HOW[q.id]; });
+
+// ───────────────── Question generators: fresh numbers every time ─────────────────
+// Each generator returns {q, ans, trap?, wrong[], why, how[], code?}. Answers and steps are computed, never hand-typed.
+const G = [];
+function gen(id, t, d, cat, k, fn) { G.push({id, t, d, cat, k, fn}); }
+const ri = (r, a, b) => a + Math.floor(r() * (b - a + 1));
+const pk = (r, arr) => arr[Math.floor(r() * arr.length)];
+const fmt = n => Number(n).toLocaleString('en-US', {maximumFractionDigits: 2});
+const usd = n => '$' + fmt(n);
+const signed = n => n === 0 ? 'No change' : (n > 0 ? '+' : '−') + fmt(Math.abs(n)) + '%';
+const ORD = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function buildGen(g, r) {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const x = g.fn(r);
+    if (!x) continue;
+    const ans = String(x.ans);
+    const opts = [ans];
+    const add = v => { v = String(v); if (v && !opts.includes(v) && opts.length < 4) opts.push(v); };
+    if (x.trap != null) add(x.trap);
+    (x.wrong || []).forEach(add);
+    if (opts.length < 4) continue;   // not enough distinct options, roll new numbers
+    return {
+      id: 'g:' + g.id + ':' + Math.floor(r() * 1e9), gen: g.id, t: g.t, d: g.d, cat: g.cat, k: g.k,
+      q: x.q, code: x.code, o: opts, a: 0, trap: x.trap != null && opts.includes(String(x.trap)) ? opts.indexOf(String(x.trap)) : undefined,
+      why: x.why, how: x.how
+    };
+  }
+  return null;
+}
+
+// ── Math ──
+gen('pct', 'math', 1, 'Math', 'pct', r => {
+  let P, N;
+  do { P = pk(r, [5, 10, 15, 20, 25, 30, 35, 40, 45, 60, 75]); N = pk(r, [40, 60, 80, 120, 160, 200, 240, 300, 360, 480, 640, 800]); } while ((P * N) % 100);
+  const ans = P * N / 100;
+  return {q: `What is ${P}% of ${N}?`, ans, trap: P * N / 10, wrong: [ans + N / 10, ans - N / 20 > 0 ? ans - N / 20 : ans + 5, ans + 5, ans * 2],
+    why: `${P}% means ${P} per 100, so ${N} × ${P / 100} = ${ans}.`,
+    how: [`10% of ${N} = ${fmt(N / 10)} (move the decimal one place).`, `${P}% is ${fmt(P / 10)} lots of 10%: ${fmt(P / 10)} × ${fmt(N / 10)}.`, `= ${fmt(ans)}.`]};
+});
+gen('mult', 'math', 2, 'Math', 'mental-mult', r => {
+  const a = ri(r, 12, 29); let b; do { b = ri(r, 13, 39); } while (b % 10 === 0);
+  const ans = a * b, bt = b - b % 10, bu = b % 10;
+  return {q: `${a} × ${b} = ?`, ans: fmt(ans), wrong: [fmt(ans + 10), fmt(ans - 10), fmt(a * (b - 1)), fmt((a + 1) * b)],
+    why: `Split ${b} into ${bt} + ${bu} and multiply each part.`,
+    how: [`Split ${b} into ${bt} + ${bu}.`, `${a} × ${bt} = ${fmt(a * bt)} and ${a} × ${bu} = ${fmt(a * bu)}.`, `${fmt(a * bt)} + ${fmt(a * bu)} = ${fmt(ans)}.`]};
+});
+gen('chain', 'math', 2, 'Math', 'pct-chain', r => {
+  const [x, y] = pk(r, [[50, 50], [20, 20], [25, 20], [10, 10], [50, 20], [20, 25], [40, 25], [100, 50], [30, 10]]);
+  const f = Math.round((1 + x / 100) * (1 - y / 100) * 1000) / 1000, net = Math.round((f - 1) * 1000) / 10;
+  return {q: `A price goes up ${x}%, then down ${y}%. Overall change from the original?`, ans: signed(net), trap: signed(x - y),
+    wrong: [signed(net + 5), signed(net - 5), signed(net + 10)],
+    why: `Percent changes multiply: ${1 + x / 100} × ${1 - y / 100} = ${f}.`,
+    how: [`Turn each change into a factor: ×${1 + x / 100} then ×${1 - y / 100}.`, `${1 + x / 100} × ${1 - y / 100} = ${f}.`, f === 1 ? 'A factor of 1 means no change overall.' : `${f} means ${signed(net)} overall.`]};
+});
+gen('avgspeed', 'math', 3, 'Math', 'harmonic', r => {
+  const [a, b] = pk(r, [[60, 40], [30, 60], [20, 30], [30, 70], [60, 90], [45, 90], [40, 60], [50, 75]]);
+  const gcd = (m, n) => n ? gcd(n, m % n) : m, D = a * b / gcd(a, b), ans = 2 * a * b / (a + b), mean = (a + b) / 2;
+  return {q: `You drive to a town at ${a} km/h and back on the same road at ${b} km/h. Average speed for the trip?`, ans: `${ans} km/h`, trap: `${mean} km/h`,
+    wrong: [`${ans + 5} km/h`, `${ans - 6} km/h`, `${mean + 5} km/h`],
+    why: 'Average speed is total distance ÷ total time, and you spend longer at the slower speed.',
+    how: [`Pick a distance both speeds divide evenly: ${D} km.`, `Out: ${D} ÷ ${a} = ${D / a} h. Back: ${D} ÷ ${b} = ${D / b} h.`, `${2 * D} km in ${D / a + D / b} h = ${ans} km/h.`]};
+});
+gen('atleast', 'math', 4, 'Probability', 'at-least-one', r => {
+  const n = ri(r, 3, 5), none = Math.pow(5 / 6, n), pct = Math.round((1 - none) * 100);
+  return {q: `Roll a fair die ${n} times. Chance of at least one 6?`, ans: `~${pct}%`, trap: `~${Math.round(n / 6 * 100)}%`,
+    wrong: [`~${Math.round(none * 100)}%`, `~${pct + 10}%`, `~${Math.round(100 / 6)}%`],
+    why: 'Work out the chance of no 6 at all, then subtract from 1.',
+    how: ['Chance of no 6 in one roll: 5/6.', `No 6 in ${n} rolls: (5/6)^${n} ≈ ${none.toFixed(3)}.`, `At least one 6: 1 − ${none.toFixed(3)} ≈ ${pct}%. Adding 1/6 per roll is the trap.`]};
+});
+gen('sum', 'math', 2, 'Math', 'sum-series', r => {
+  const n = pk(r, [20, 30, 40, 50, 60, 80, 120, 200]), ans = n * (n + 1) / 2;
+  return {q: `What is 1 + 2 + 3 + … + ${n}?`, ans: fmt(ans), wrong: [fmt(n * n / 2), fmt(n * (n - 1) / 2), fmt(n * (n + 1))],
+    why: 'Pair the first and last numbers: each pair has the same sum.',
+    how: [`Pair the ends: 1 + ${n} = ${n + 1}, 2 + ${n - 1} = ${n + 1}, and so on.`, `There are ${n / 2} pairs.`, `${n / 2} × ${n + 1} = ${fmt(ans)}.`]};
+});
+
+// ── Aptitude ──
+gen('work', 'apt', 2, 'Quant', 'work', r => {
+  const [x, y] = pk(r, [[10, 15], [12, 24], [20, 30], [6, 12], [18, 9], [20, 5], [30, 60], [4, 12], [10, 40], [15, 30], [21, 42]]);
+  const ans = x * y / (x + y);
+  return {q: `A can finish a job in ${x} days, B in ${y} days. Working together, how many days?`, ans: `${ans} days`, trap: `${(x + y) / 2} days`,
+    wrong: [`${x + y} days`, `${Math.abs(x - y) || ans + 2} days`, `${ans + 2} days`],
+    why: 'Add how much of the job each person does per day, not their times.',
+    how: [`A does 1/${x} of the job a day. B does 1/${y}.`, `Together: 1/${x} + 1/${y} = 1/${ans} of the job a day.`, `So the whole job takes ${ans} days.`]};
+});
+gen('train', 'apt', 2, 'Quant', 'speed', r => {
+  const v = pk(r, [36, 54, 72, 90, 108]), ms = v * 5 / 18, t = ri(r, 6, 15), L = ms * t;
+  return {q: `A ${L} m long train moving at ${v} km/h passes a pole. How long does it take?`, ans: `${t} s`, trap: `${fmt(L / v)} s`,
+    wrong: [`${t + 3} s`, `${t * 2} s`, `${Math.max(2, t - 4)} s`],
+    why: 'Convert km/h to m/s first, then divide the train\'s length by its speed.',
+    how: [`Convert: ${v} km/h × 5/18 = ${ms} m/s.`, `Passing a pole means covering the train's own length: ${L} m.`, `${L} ÷ ${ms} = ${t} s.`]};
+});
+gen('ratio', 'apt', 1, 'Quant', 'ratios', r => {
+  const [a, b] = pk(r, [[3, 2], [2, 3], [4, 1], [5, 3], [3, 4], [7, 3], [1, 3]]);
+  const [n1, n2, all] = pk(r, [['boys', 'girls', 'students'], ['cats', 'dogs', 'pets'], ['red balls', 'blue balls', 'balls'], ['tea drinkers', 'coffee drinkers', 'people']]);
+  const per = ri(r, 4, 12), N = (a + b) * per, ans = b * per;
+  return {q: `The ratio of ${n1} to ${n2} is ${a}:${b}. There are ${N} ${all}. How many ${n2}?`, ans, trap: a * per,
+    wrong: [Math.round(N / 2) === ans ? ans + per : Math.round(N / 2), ans + per, Math.max(1, ans - per)],
+    why: 'Add the ratio parts, find what one part is worth, then multiply.',
+    how: [`${a}:${b} means ${a + b} equal parts.`, `${N} ÷ ${a + b} = ${per} per part.`, `${n2[0].toUpperCase() + n2.slice(1)} = ${b} parts = ${ans}.`]};
+});
+gen('interest', 'apt', 2, 'Quant', 'interest', r => {
+  const P = pk(r, [1000, 2000, 5000, 8000, 10000]), rate = pk(r, [4, 5, 6, 8, 10, 12]), t = ri(r, 2, 5);
+  const ans = P * rate * t / 100, comp = Math.round(P * (Math.pow(1 + rate / 100, t) - 1));
+  return {q: `Simple interest on ${usd(P)} at ${rate}% a year for ${t} years?`, ans: usd(ans), trap: usd(comp),
+    wrong: [usd(P * rate / 100), usd(ans * 2), usd(P + ans)],
+    why: 'Simple interest = principal × rate × years. It never earns interest on interest.',
+    how: ['Simple interest = principal × rate × years.', `${usd(P)} × ${rate / 100} × ${t}.`, `= ${usd(ans)}. (${usd(comp)} would be compound interest.)`]};
+});
+gen('calendar', 'apt', 2, 'Reasoning', 'calendar', r => {
+  const s = ri(r, 0, 6), n = ri(r, 20, 400), ans = DAYS[(s + n) % 7];
+  return {q: `Today is ${DAYS[s]}. What day of the week is it ${n} days from now?`, ans, trap: DAYS[(s + n + 1) % 7],
+    wrong: [DAYS[(s + n + 2) % 7], DAYS[(s + n + 6) % 7], DAYS[(s + n + 3) % 7]],
+    why: 'Weekdays repeat every 7 days, so only the remainder matters.',
+    how: ['Weekdays repeat every 7 days.', `${n} ÷ 7 = ${Math.floor(n / 7)} weeks, remainder ${n % 7}.`, `${DAYS[s]} + ${n % 7} day${n % 7 === 1 ? '' : 's'} = ${ans}.`]};
+});
+gen('series', 'apt', 2, 'Reasoning', 'seq', r => {
+  const kind = ri(r, 0, 2); let terms = [], next, rule, how;
+  if (kind === 0) { const a = ri(r, 2, 20), d = ri(r, 3, 12); terms = [0, 1, 2, 3, 4].map(i => a + i * d); next = a + 5 * d; rule = `adds ${d} each time`; how = [`Gaps: ${d}, ${d}, ${d}, ${d}. Constant.`, `${terms[4]} + ${d} = ${next}.`]; }
+  else if (kind === 1) { const a = ri(r, 1, 10), g0 = ri(r, 2, 5), inc = ri(r, 1, 3); let v = a; terms = [v]; for (let i = 0; i < 4; i++) { v += g0 + i * inc; terms.push(v); } next = v + g0 + 4 * inc; rule = `gaps grow by ${inc}`; how = [`Gaps: ${[0, 1, 2, 3].map(i => g0 + i * inc).join(', ')}. Each gap grows by ${inc}.`, `Next gap: ${g0 + 4 * inc}.`, `${terms[4]} + ${g0 + 4 * inc} = ${next}.`]; }
+  else { const a = ri(r, 1, 5), m = pk(r, [2, 3]); terms = [0, 1, 2, 3, 4].map(i => a * Math.pow(m, i)); next = a * Math.pow(m, 5); rule = `multiplies by ${m}`; how = [`Ratios: each term is ${m}× the one before.`, `${terms[4]} × ${m} = ${next}.`]; }
+  const lastGap = terms[4] - terms[3];
+  return {q: `What comes next: ${terms.join(', ')}, …`, ans: next, trap: terms[4] + lastGap === next ? next + 1 : terms[4] + lastGap,
+    wrong: [next + 2, next - 2, next + lastGap], why: `The sequence ${rule}.`, how};
+});
+gen('clock', 'apt', 3, 'Reasoning', 'clock', r => {
+  const h = ri(r, 1, 11), m = pk(r, [10, 15, 20, 30, 40, 45, 50]);
+  const hourDeg = 30 * h + 0.5 * m, minDeg = 6 * m, raw = Math.abs(hourDeg - minDeg), ang = raw > 180 ? 360 - raw : raw;
+  const nraw = Math.abs(30 * h - 6 * m), naive = nraw > 180 ? 360 - nraw : nraw;
+  const t = `${h}:${String(m).padStart(2, '0')}`;
+  return {q: `What is the smaller angle between the hands of a clock at ${t}?`, ans: `${fmt(ang)}°`, trap: `${fmt(naive)}°`,
+    wrong: [`${fmt(ang + 15)}°`, `${fmt(Math.abs(ang - 10))}°`, `${fmt(360 - ang)}°`],
+    why: 'The hour hand keeps moving: 0.5° every minute.',
+    how: [`Minute hand: ${m} × 6° = ${minDeg}°.`, `Hour hand: ${h} × 30° + ${m} × 0.5° = ${fmt(hourDeg)}°.`, raw > 180 ? `Gap: ${fmt(raw)}°, so the smaller angle is 360° − ${fmt(raw)}° = ${fmt(ang)}°.` : `Gap: ${fmt(ang)}°.`]};
+});
+gen('code-shift', 'apt', 2, 'Reasoning', 'codes', r => {
+  const words = ['CAT', 'DOG', 'SUN', 'PEN', 'MAP', 'BOX', 'CUP', 'HAT', 'RED', 'JAM', 'BUS', 'TOP'];
+  const w1 = pk(r, words); let w2; do { w2 = pk(r, words); } while (w2 === w1);
+  const k = ri(r, 1, 3), sh = (w, s) => w.split('').map(c => String.fromCharCode((c.charCodeAt(0) - 65 + s + 26) % 26 + 65)).join('');
+  return {q: `If ${w1} is coded as ${sh(w1, k)}, how is ${w2} coded?`, ans: sh(w2, k), trap: sh(w2, k === 1 ? 2 : k - 1),
+    wrong: [sh(w2, k + 1), sh(w2, -k), sh(w2, k).split('').reverse().join('')],
+    why: `Every letter moves ${k} place${k > 1 ? 's' : ''} forward in the alphabet.`,
+    how: [`Compare letters: ${w1[0]}→${sh(w1, k)[0]}, ${w1[1]}→${sh(w1, k)[1]}, ${w1[2]}→${sh(w1, k)[2]}. Each moves forward ${k}.`, `Apply the same shift to ${w2}: ${w2.split('').map(c => c + '→' + sh(c, k)).join(', ')}.`, `${w2} becomes ${sh(w2, k)}.`]};
+});
+
+// ── Business & product ──
+gen('funnel', 'biz', 2, 'Funnels', 'conversion', r => {
+  let V, a, b; do { V = pk(r, [5000, 10000, 20000, 40000, 50000]); a = pk(r, [10, 20, 25, 40]); b = pk(r, [5, 10, 20]); } while ((V * a * b) % 10000);
+  const mid = V * a / 100, ans = V * a * b / 10000;
+  return {q: `${fmt(V)} visitors. ${a}% sign up, and ${b}% of signups become paying customers. How many paying customers?`, ans: fmt(ans), trap: fmt(V * (a + b) / 100),
+    wrong: [fmt(mid), fmt(ans * 10), fmt(V * b / 100)],
+    why: 'Each funnel step applies to the step before it, so the rates multiply.',
+    how: [`Visitors → signups: ${fmt(V)} × ${a}% = ${fmt(mid)}.`, `Signups → paying: ${fmt(mid)} × ${b}% = ${fmt(ans)}.`, `Adding the percentages (${a + b}%) is the trap.`]};
+});
+gen('margin', 'biz', 1, 'Finance', 'margin', r => {
+  const R = pk(r, [10000, 20000, 40000, 50000, 80000]), c = pk(r, [60, 70, 75, 80, 90]), C = R * c / 100, P = R - C, m = 100 - c;
+  return {q: `Revenue is ${usd(R)} and costs are ${usd(C)}. Profit margin?`, ans: `${m}%`, trap: `${fmt(Math.round(P / C * 1000) / 10)}%`,
+    wrong: [`${c}%`, `${m + 10}%`, `${Math.max(5, m - 5)}%`],
+    why: 'Margin is profit divided by revenue, not by cost.',
+    how: [`Profit = ${usd(R)} − ${usd(C)} = ${usd(P)}.`, `Margin = profit ÷ revenue = ${fmt(P)} ÷ ${fmt(R)}.`, `= ${m}%.`]};
+});
+gen('payback', 'biz', 1, 'Unit economics', 'unit-econ', r => {
+  const price = pk(r, [10, 15, 20, 25, 30, 50]), mo = ri(r, 2, 8), cac = price * mo;
+  return {q: `A ${usd(price)}/month subscription costs ${usd(cac)} to acquire each customer. Months to pay back that cost?`, ans: `${mo} months`, trap: `${mo * 12} months`,
+    wrong: [`${mo + 2} months`, `${Math.max(1, mo - 1)} months`, `${mo * 2} months`],
+    why: 'Payback = acquisition cost ÷ monthly revenue per customer.',
+    how: ['Payback = acquisition cost ÷ monthly revenue per customer.', `${usd(cac)} ÷ ${usd(price)} = ${mo} months.`]};
+});
+gen('ltv', 'biz', 3, 'Unit economics', 'unit-econ', r => {
+  let A, M, C; do { A = pk(r, [20, 25, 30, 40, 50]); M = pk(r, [50, 60, 75, 80]); C = pk(r, [2, 4, 5, 10]); } while ((A * M) % C || (A * M / C) % 1);
+  const ans = A * M / C, life = 100 / C;
+  return {q: `ARPU is ${usd(A)}/month, gross margin ${M}%, monthly churn ${C}%. Rough customer lifetime value?`, ans: usd(ans), trap: usd(A * 100 / C),
+    wrong: [usd(A * M / 100 * 12), usd(ans * 2), usd(ans / 2)],
+    why: 'LTV = monthly profit per customer × average lifetime in months.',
+    how: [`Monthly profit per customer: ${usd(A)} × ${M}% = ${usd(A * M / 100)}.`, `Average lifetime: 1 ÷ ${C}% = ${fmt(life)} months.`, `${usd(A * M / 100)} × ${fmt(life)} = ${usd(ans)}.`]};
+});
+gen('sticky', 'biz', 1, 'Metrics', 'retention', r => {
+  const MAU = pk(r, [50000, 100000, 200000, 400000]), p = pk(r, [10, 15, 20, 25, 40]), DAU = MAU * p / 100;
+  return {q: `DAU is ${fmt(DAU)} and MAU is ${fmt(MAU)}. What is the DAU/MAU ratio?`, ans: `${p}%`, trap: `${100 - p}%`,
+    wrong: [`${p * 2}%`, `${p / 2}%`, `${p + 5}%`],
+    why: 'Stickiness = daily users ÷ monthly users.',
+    how: ['DAU/MAU = daily active users ÷ monthly active users.', `${fmt(DAU)} ÷ ${fmt(MAU)} = ${p / 100}.`, `= ${p}%. Roughly, the average user shows up ${fmt(Math.round(p * 0.3))} days a month.`]};
+});
+gen('churn', 'biz', 2, 'Metrics', 'retention', r => {
+  const c = pk(r, [2, 3, 5, 8, 10]), n = pk(r, [6, 12]), left = Math.pow(1 - c / 100, n), pct = Math.round(left * 100);
+  return {q: `Monthly churn is ${c}%. Roughly what share of a cohort is left after ${n} months?`, ans: `~${pct}%`, trap: `~${Math.max(0, 100 - c * n)}%`,
+    wrong: [`~${100 - c}%`, `~${Math.min(99, pct + 12)}%`, `~${Math.max(1, pct - 12)}%`],
+    why: 'Churn compounds: each month you lose a share of whoever is still left.',
+    how: [`Each month ${100 - c}% of the remaining users stay.`, `After ${n} months: ${(1 - c / 100).toFixed(2)}^${n} ≈ ${left.toFixed(2)}.`, `About ${pct}% remain. Subtracting ${c}% × ${n} is the trap.`]};
+});
+gen('priceup', 'biz', 4, 'Pricing', 'elasticity', r => {
+  const x = pk(r, [5, 10, 20]), y = pk(r, [5, 10, 15, 20, 25]), f = (1 + x / 100) * (1 - y / 100), net = Math.round((f - 1) * 1000) / 10;
+  if (x === y) return {q: `You raise the price ${x}% and unit sales drop ${y}%. Revenue change?`, ans: signed(net), trap: 'No change', wrong: [signed(net - 5), signed(x), signed(-y)], why: 'Revenue = price × units, so multiply the factors.', how: [`Factors: ×${1 + x / 100} for price, ×${1 - y / 100} for units.`, `${1 + x / 100} × ${1 - y / 100} = ${f.toFixed(4).replace(/0+$/, '')}.`, `That's ${signed(net)}. Even matched changes lose a little.`]};
+  return {q: `You raise the price ${x}% and unit sales drop ${y}%. Revenue change?`, ans: signed(net), trap: signed(x - y),
+    wrong: [signed(net - 5), signed(x), signed(-y)],
+    why: 'Revenue = price × units, so multiply the two factors.',
+    how: [`Factors: ×${1 + x / 100} for price, ×${1 - y / 100} for units.`, `${1 + x / 100} × ${1 - y / 100} = ${f.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')}.`, `That's ${signed(net)}. Simply subtracting ${y} from ${x} is the trap.`]};
+});
+gen('growth', 'biz', 3, 'Finance', 'growth-rates', r => {
+  const [S, g] = pk(r, [[100, 50], [200, 50], [400, 50], [100, 100], [400, 25], [100, 20], [500, 20], [200, 100]]);
+  const y1 = S * (1 + g / 100), y2 = y1 * (1 + g / 100), total = Math.round((y2 / S - 1) * 100);
+  return {q: `Revenue went $${fmt(S)}k → $${fmt(y1)}k → $${fmt(y2)}k over two years. Annual growth rate?`, ans: `${g}%`, trap: `${total}%`,
+    wrong: [`${Math.round(total / 2)}%` === `${g}%` ? `${g + 10}%` : `${Math.round(total / 2)}%`, `${g * 2}%`, `${Math.max(5, g - 10)}%`],
+    why: 'Annual growth compares each year with the one before it.',
+    how: [`Year 1: ${fmt(y1)} ÷ ${fmt(S)} = ${1 + g / 100}, so +${g}%.`, `Year 2: ${fmt(y2)} ÷ ${fmt(y1)} = ${1 + g / 100}, so +${g}% again.`, `Annual rate: ${g}%. ${total}% is the two-year total.`]};
+});
+
+// ── Street smarts ──
+gen('unitprice', 'street', 1, 'Money', 'unit-price', r => {
+  const g1 = pk(r, [250, 400, 500]), per1 = pk(r, [8, 10, 12, 16]), p1 = g1 / 1000 * per1;
+  const g2 = pk(r, [750, 1000, 1500]), cheaperBig = r() < 0.6, per2 = Math.round((per1 + (cheaperBig ? -1 : 1) * pk(r, [0.4, 0.8, 1.2, 2])) * 100) / 100, p2 = Math.round(g2 / 1000 * per2 * 100) / 100;
+  const m2 = n => '$' + Number(n).toFixed(2);
+  const A = `${g1} g for ${m2(p1)}`, B = `${fmt(g2)} g for ${m2(p2)}`;
+  const ans = p2 / g2 < p1 / g1 ? B : A;
+  return {q: 'Which is the better deal?', ans, trap: ans === A ? B : A, wrong: ['Same price per gram', 'Can\'t tell without the brand'],
+    why: 'Compare price per kilo, not the sticker price.',
+    how: [`${A}: ${m2(p1)} ÷ ${g1 / 1000} kg = ${m2(per1)}/kg.`, `${B}: ${m2(p2)} ÷ ${g2 / 1000} kg = ${m2(p2 / (g2 / 1000))}/kg.`, `Lower price per kilo wins: ${ans}.`]};
+});
+gen('rule72', 'street', 2, 'Money', 'compounding', r => {
+  const rate = pk(r, [2, 3, 4, 6, 8, 9, 12]), yrs = 72 / rate;
+  return {q: `Money grows at ${rate}% a year. Roughly how long until it doubles?`, ans: `~${yrs} years`, trap: `~${Math.round(100 / rate)} years`,
+    wrong: [`~${yrs * 2} years`, `~${Math.max(1, Math.round(yrs / 2))} years`, `~${Math.round(50 / rate) === yrs ? yrs + 3 : Math.round(50 / rate)} years`],
+    why: 'Rule of 72: years to double ≈ 72 ÷ the annual rate.',
+    how: ['Rule of 72: years to double ≈ 72 ÷ annual rate.', `72 ÷ ${rate} = ${yrs}.`, `So about ${yrs} years. Dividing 100 by the rate ignores compounding.`]};
+});
+gen('recover', 'street', 2, 'Money', 'compounding', r => {
+  const x = pk(r, [20, 25, 50, 75, 80, 90]), need = x / (100 - x) * 100, needS = Number.isInteger(need) ? `${need}%` : `~${Math.round(need)}%`;
+  return {q: `An investment falls ${x}%. How much must it rise to get back to where it started?`, ans: needS, trap: `${x}%`,
+    wrong: [`${Math.round(need / 2) || 10}%`, `${x * 2 === need ? x * 3 : x * 2}%`, `${100 - x}%`],
+    why: 'After a fall, you are gaining on a smaller amount.',
+    how: [`Start at $100. A ${x}% fall leaves $${100 - x}.`, `To get back to $100 you need +$${x} on $${100 - x}.`, `${x} ÷ ${100 - x} = ${fmt(Math.round(need * 10) / 10)}%.`]};
+});
+gen('risk', 'street', 4, 'Stats', 'relative-risk', r => {
+  const a = pk(r, [2, 4, 6, 10, 20, 40]), quarter = a % 4 === 0 && r() < 0.5, b = quarter ? a / 4 : a / 2, rel = Math.round((a - b) / a * 100);
+  const abs = (a - b) / 100;
+  return {q: `"New drug cuts risk by ${rel}%!" Risk went from ${a} in 10,000 to ${b} in 10,000. Absolute risk reduction?`, ans: `${fmt(abs)}%`, trap: `${rel}%`,
+    wrong: [`${fmt(a - b)}%`, `${fmt(abs * 10)}%`, `${fmt((a - b) / 10)}% points` ],
+    why: 'Headlines quote the relative change. The absolute change is usually tiny.',
+    how: [`Absolute drop: ${a} − ${b} = ${a - b} in 10,000.`, `${a - b} ÷ 10,000 = ${String((a - b) / 10000)} = ${fmt(abs)}%.`, `The ${rel}% is relative: ${a - b} out of the original ${a}.`]};
+});
+gen('onein', 'street', 2, 'Stats', 'big-numbers', r => {
+  const [N, Ns] = pk(r, [[10000, '10,000'], [100000, '100,000'], [1000000, 'a million'], [10000000, '10 million']]);
+  const [P, Ps] = pk(r, [[8e9, '8 billion people on Earth'], [1e8, 'a country of 100 million'], [1e7, 'a city of 10 million']]);
+  const ans = P / N;
+  if (ans < 10) return null;
+  return {q: `Something happens to "one in ${Ns}" people a year. In ${Ps}, roughly how many is that?`, ans: `About ${fmt(ans)}`, trap: 'Almost nobody',
+    wrong: [`About ${fmt(ans / 100)}`, `About ${fmt(ans * 10)}`],
+    why: 'Rare per person still means many people in a big population.',
+    how: [`Divide the population by ${Ns}.`, `${fmt(P)} ÷ ${fmt(N)} = ${fmt(ans)}.`, `So a "one in ${Ns}" event still hits about ${fmt(ans)} people.`]};
+});
+
+// ── Coding ──
+gen('loop', 'code', 2, 'Loops', 'loops', r => {
+  const s = ri(r, 0, 3), e = ri(r, 10, 30), k = ri(r, 2, 5), vals = []; for (let i = s; i < e; i += k) vals.push(i);
+  const n = vals.length, fl = Math.floor((e - s) / k);
+  return {q: 'How many times does this loop run?', code: `for (let i = ${s}; i < ${e}; i += ${k}) { … }`, ans: n, trap: fl === n ? n + 1 : fl,
+    wrong: [n + 2, Math.max(1, n - 1), e - s],
+    why: 'Trace the loop variable until the condition fails.',
+    how: [`i takes the values ${vals.length <= 10 ? vals.join(', ') : vals.slice(0, 4).join(', ') + ' … ' + vals[vals.length - 1]}.`, `The next value, ${vals[vals.length - 1] + k}, fails i < ${e}.`, `That's ${n} runs.`]};
+});
+gen('jsplus', 'code', 1, 'JavaScript', 'js-coercion', r => {
+  const v = ri(r, 0, 2), a = ri(r, 2, 9), b = ri(r, 2, 9), c = ri(r, 1, 9);
+  if (v === 0) return {q: `In JavaScript, what is <code>"${a}" + ${b}</code>?`, ans: `"${a}${b}"`, trap: `${a + b}`, wrong: ['NaN', 'TypeError'],
+    why: 'If either side of + is a string, JavaScript joins text.', how: [`"${a}" is a string.`, `+ with a string converts ${b} to "${b}" and joins them.`, `Result: "${a}${b}".`]};
+  if (v === 1) return {q: `In JavaScript, what is <code>${a} + ${b} + "${c}"</code>?`, ans: `"${a + b}${c}"`, trap: `"${a}${b}${c}"`, wrong: [`${a + b + c}`, 'NaN'],
+    why: '+ runs left to right: numbers add first, then the string joins.', how: [`Left to right: ${a} + ${b} = ${a + b} (both numbers).`, `${a + b} + "${c}" joins text: "${a + b}${c}".`]};
+  const hi = Math.max(a, b) + 1, lo = Math.min(a, b);
+  return {q: `In JavaScript, what is <code>"${hi}" - ${lo}</code>?`, ans: `${hi - lo}`, trap: `"${hi}${lo}"`, wrong: ['NaN', 'TypeError'],
+    why: '- only works on numbers, so JavaScript converts the string to a number.', how: ['Unlike +, the - operator has no text meaning.', `"${hi}" is converted to ${hi}.`, `${hi} − ${lo} = ${hi - lo}.`]};
+});
+gen('pyfloor', 'code', 2, 'Python', 'python-basics', r => {
+  let a, b; do { a = ri(r, 7, 40); b = ri(r, 2, 7); } while (a % b === 0);
+  const v = r() < 0.5;
+  if (v) return {q: `In Python 3, what is <code>${a} // ${b}</code>?`, ans: `${Math.floor(a / b)}`, trap: `${fmt(Math.round(a / b * 100) / 100)}`, wrong: [`${Math.ceil(a / b)}`, `${a % b}`],
+    why: '// divides and rounds down to a whole number.', how: [`${a} ÷ ${b} = ${fmt(Math.round(a / b * 1000) / 1000)}.`, `// rounds down (floor): ${Math.floor(a / b)}.`]};
+  const items = ri(r, 2, 4), k = ri(r, 2, 4), list = Array.from({length: items}, (_, i) => i + 1).join(', ');
+  return {q: `In Python, what is <code>len([${list}] * ${k})</code>?`, ans: `${items * k}`, trap: `${items}`, wrong: [`${k}`, 'TypeError'],
+    why: '* on a list repeats it.', how: [`[${list}] * ${k} repeats the ${items}-item list ${k} times.`, `${items} × ${k} = ${items * k} items.`]};
+});
+gen('pynegfloor', 'code', 3, 'Python', 'python-basics', r => {
+  let a, b; do { a = ri(r, 5, 25); b = ri(r, 2, 6); } while (a % b === 0);
+  const ans = Math.floor(-a / b);
+  return {q: `In Python 3, what is <code>-${a} // ${b}</code>?`, ans: `${ans}`, trap: `${ans + 1}`, wrong: [`${fmt(Math.round(-a / b * 100) / 100)}`, `${-(a % b)}`],
+    why: '// rounds down toward negative infinity, not toward zero.',
+    how: [`-${a} ÷ ${b} = ${fmt(Math.round(-a / b * 1000) / 1000)}.`, `Rounding down (toward −∞) gives ${ans}.`, `${ans + 1} would be rounding toward zero, which is what many other languages do.`]};
+});
+
+// ── Logic ──
+gen('allbut', 'logic', 1, 'Logic', 'read-q', r => {
+  const N = ri(r, 12, 30); let K; do { K = ri(r, 3, N - 4); } while (K * 2 === N);
+  const animal = pk(r, ['sheep', 'goats', 'cows', 'ducks', 'chickens']);
+  return {q: `A farmer has ${N} ${animal}. All but ${K} run away. How many are left?`, ans: K, trap: N - K, wrong: [N, 0, N + K],
+    why: `"All but ${K}" means everyone except ${K} left.`, how: [`"All but ${K} run away" = all of them ran except ${K}.`, `So ${K} stay.`, `${N} is a distraction. No subtraction needed.`]};
+});
+gen('race', 'logic', 1, 'Logic', 'read-q', r => {
+  const p = ri(r, 2, 9);
+  return {q: `In a race, you overtake the person in ${ORD(p)} place. What place are you in now?`, ans: ORD(p), trap: ORD(p - 1), wrong: [ORD(p + 1), 'Last', '1st'],
+    why: 'Overtaking someone puts you exactly where they were.', how: [`They were ${ORD(p)}. You take their spot.`, `You are ${ORD(p)}. They drop to ${ORD(p + 1)}.`]};
+});
+gen('lily', 'logic', 2, 'Logic', 'exp-growth', r => {
+  const D = ri(r, 20, 60), quarter = r() < 0.4, ans = quarter ? D - 2 : D - 1;
+  return {q: `Algae doubles in area every day and covers the whole pond on day ${D}. On which day was the pond ${quarter ? 'a quarter' : 'half'} covered?`, ans: `Day ${ans}`, trap: `Day ${quarter ? D / 4 : D / 2}`,
+    wrong: [`Day ${quarter ? D - 1 : D - 2}`, `Day ${D - 4}`, `Day ${Math.round(D / 3)}`],
+    why: 'It doubles daily, so step back from the end, not the middle.',
+    how: [`Full on day ${D}.`, `Half the size one day earlier: day ${D - 1}.`, quarter ? `A quarter one more day earlier: day ${D - 2}.` : 'Dividing the days in half is the trap.']};
+});
+gen('machines', 'logic', 2, 'Logic', 'rates', r => {
+  const M = ri(r, 3, 9), T = ri(r, 2, 12), N = pk(r, [20, 50, 100, 200, 300]);
+  return {q: `${M} machines make ${M} widgets in ${T} minutes. How long do ${N} machines take to make ${N} widgets?`, ans: `${T} min`, trap: `${N} min`,
+    wrong: [`${N * T / M} min` === `${T} min` ? `${T + 5} min` : `${Math.round(N * T / M)} min`, `${Math.max(1, Math.round(T * M / N))} min`, `${T * 2} min`],
+    why: 'Find what one machine does, then scale.',
+    how: [`${M} machines make ${M} widgets in ${T} min, so each machine makes 1 widget in ${T} min.`, `${N} machines work in parallel, each making 1 widget in ${T} min.`, `${N} widgets in ${T} minutes.`]};
+});
+gen('batball', 'logic', 2, 'Logic', 'crt', r => {
+  const b = pk(r, [5, 10, 15, 20, 25, 30]), D = pk(r, [100, 200]), T = 2 * b + D;
+  const [big, small] = pk(r, [['bat', 'ball'], ['notebook', 'pen'], ['pizza', 'drink'], ['book', 'bookmark']]);
+  const money = c => c >= 100 ? '$' + (c / 100).toFixed(2) : c + '¢';
+  return {q: `A ${big} and a ${small} cost ${money(T)} in total. The ${big} costs ${money(D)} more than the ${small}. How much is the ${small}?`, ans: money(b), trap: money(T - D),
+    wrong: [money(b + 10), money(Math.max(1, b - 5) === b ? b + 5 : Math.max(1, b - 5)), money(Math.round((T - D) / 3))],
+    why: 'Check the gut answer: plug it back into both conditions.',
+    how: [`Let the ${small} be x. The ${big} is x + ${money(D)}.`, `x + (x + ${money(D)}) = ${money(T)}, so 2x = ${money(T - D)}.`, `x = ${money(b)}. Check: ${money(b)} + ${money(b + D)} = ${money(T)}.`]};
+});
+gen('syllogism', 'logic', 2, 'Logic', 'syllogism', r => {
+  const W = ['bloops', 'razzies', 'lazzies', 'zorbs', 'quibs', 'flens', 'drobs', 'wazzles'];
+  const pick3 = () => { const s = W.slice(); const o = []; while (o.length < 3) o.push(s.splice(Math.floor(r() * s.length), 1)[0]); return o; };
+  const [A, B, C] = pick3(), v = ri(r, 0, 2);
+  if (v === 0) return {q: `All ${A} are ${B}. All ${B} are ${C}. Are all ${A} definitely ${C}?`, ans: 'Yes', trap: 'Can\'t tell', wrong: ['No', 'Only some'],
+    why: 'Circles inside circles: if A sits inside B and B inside C, A is inside C.', how: [`Picture ${A} as a circle inside ${B}.`, `${B} sits inside ${C}.`, `So ${A} is inside ${C} too. Yes.`]};
+  if (v === 1) return {q: `All ${A} are ${B}. Some ${B} are ${C}. Are some ${A} definitely ${C}?`, ans: 'Can\'t tell', trap: 'Yes', wrong: ['No', 'All of them'],
+    why: 'The overlap with C could be in the part of B that has no A in it.', how: [`${A} sits inside ${B}.`, `Only some of ${B} overlaps ${C}, and that part might contain no ${A} at all.`, 'So it could be true or false: can\'t tell.']};
+  return {q: `No ${A} are ${B}. All ${C} are ${B}. Can any ${C} be ${A}?`, ans: 'No', trap: 'Can\'t tell', wrong: ['Yes', 'Only some'],
+    why: 'Everything in C is inside B, and nothing in B is A.', how: [`All ${C} sit inside ${B}.`, `${A} and ${B} don't overlap at all.`, `So no ${C} can be ${A}.`]};
+});
+
 const concept = k => ({key: k, name: (CONCEPTS[k] || ['Trick', ''])[0], rule: (CONCEPTS[k] || ['', ''])[1]});
 
 // ───────────────── Lessons: 2-minute reads that end in a drill ─────────────────
@@ -915,7 +1372,7 @@ let mastery = store.get('mastery', {});     // {concept: {s: seen, r: right}}
 let mistakes = store.get('mistakes', {});   // {questionId: {pick, t, at}}
 let lessonsDone = store.get('lessons', {}); // {lessonId: {drilled: bool}}
 function conceptState(m) { if (!m || !m.s) return 'new'; const rate = m.r / m.s; return rate >= 0.75 && m.s >= 2 ? 'strong' : rate < 0.5 ? 'weak' : 'learning'; }
-let seen = new Set(store.get('seen', []));
+let seenAt = store.get('seenAt', null) || Object.fromEntries((store.get('seen', []) || []).map(id => [id, 1])); // {questionId: last time seen}
 let daily = store.get('daily', null);      // {date, you:[], bot:[], ys, bs, win}
 let streak = store.get('streak', {n: 0, last: null, days: []});
 let playerName = store.get('name', '');
@@ -934,21 +1391,38 @@ const isUnlocked = (n, t = track) => n <= highest(t) + 1;
 
 // ───────────────── Question picking ─────────────────
 // arena 'mix' and the daily run use every arena except code, so anyone can play them
+// Order for each slot: hand-written questions you haven't seen, mixed with freshly generated ones;
+// once the hand-written ones run out, generated questions take over, then the ones you saw longest ago.
 function pickQuestions(mix, r, useSeen, arena) {
-  const inArena = q => (arena === 'mix' || arena === 'daily') ? q.t !== 'code' : q.t === arena;
-  const used = new Set(); const out = [];
+  const inArena = x => (arena === 'mix' || arena === 'daily') ? x.t !== 'code' : x.t === arena;
+  const usedS = new Set(), usedG = new Set(); const out = [];
   mix.forEach(d => {
-    const tryD = [d, d + 1, d - 1, d + 2, d - 2].filter(x => x >= 1 && x <= 4);
-    let pool = [];
-    if (useSeen) for (const dd of tryD) { pool = Q.filter(q => inArena(q) && q.d === dd && !used.has(q.id) && !seen.has(q.id)); if (pool.length) break; }
-    if (!pool.length) pool = Q.filter(q => inArena(q) && q.d === d && !used.has(q.id));
-    if (!pool.length) for (const dd of tryD) { pool = Q.filter(q => inArena(q) && q.d === dd && !used.has(q.id)); if (pool.length) break; }
-    if (!pool.length) pool = Q.filter(q => !used.has(q.id));
-    const q = pool[Math.floor(r() * pool.length)];
-    used.add(q.id); out.push(q);
+    const near = [d, d + 1, d - 1, d + 2, d - 2].filter(x => x >= 1 && x <= 4);
+    let fresh = [], gens = [];
+    for (const dd of near) { fresh = Q.filter(q => inArena(q) && q.d === dd && !usedS.has(q.id) && !(useSeen && seenAt[q.id])); if (fresh.length) break; }
+    for (const dd of near) { gens = G.filter(g => inArena(g) && g.d === dd && !usedG.has(g.id)); if (gens.length) break; }
+    let q = null;
+    const useGen = gens.length && (!fresh.length || r() < (useSeen ? 0.4 : 0.5));
+    if (useGen) q = buildGen(gens[Math.floor(r() * gens.length)], r);
+    if (!q && fresh.length) q = fresh[Math.floor(r() * fresh.length)];
+    if (!q) {
+      const pool = Q.filter(x => inArena(x) && near.includes(x.d) && !usedS.has(x.id)).sort((a, b) => (seenAt[a.id] || 0) - (seenAt[b.id] || 0));
+      q = pool[0] || Q.find(x => !usedS.has(x.id));
+    }
+    if (q.gen) usedG.add(q.gen); else usedS.add(q.id);
+    out.push(prepare(q, r));
   });
   return out;
 }
+// Shuffle answer options so positions can't be memorised. All-number options are sorted low to high instead.
+function prepare(q, r) {
+  const o = q.o.slice();
+  const num = v => parseFloat(String(v).replace(/[~$¢%°,]|days?|months?|years?|km\/h|min|s$/g, '').replace('−', '-'));
+  if (o.every(v => !isNaN(num(v)) && /^[~$−\-]?[\d.,]+/.test(String(v).replace(/^About /, '')))) o.sort((a, b) => num(a) - num(b));
+  else for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+  return Object.assign({}, q, {o, a: o.indexOf(q.o[q.a]), trap: q.trap != null ? o.indexOf(q.o[q.trap]) : undefined});
+}
+function snapshot(q) { return {id: q.id, gen: q.gen, t: q.t, d: q.d, cat: q.cat, k: q.k, q: q.q, code: q.code, o: q.o, a: q.a, trap: q.trap, why: q.why, how: q.how}; }
 // Human par: how long a sharp person needs to read and solve this question.
 // Reading at ~210 words a minute, ~3s per line of code to trace, plus thinking time that grows with difficulty.
 function parTime(q) {
@@ -997,8 +1471,8 @@ function startDaily() {
   openGame(); renderQ();
 }
 function startReview() {
-  const ids = Object.entries(mistakes).sort((a, b) => b[1].at - a[1].at).slice(0, 5).map(e => +e[0]);
-  const qs = ids.map(id => Q.find(q => q.id === id)).filter(Boolean);
+  const recent = Object.entries(mistakes).sort((a, b) => b[1].at - a[1].at).slice(0, 5);
+  const qs = recent.map(([id, m]) => m.q || Q.find(q => String(q.id) === id)).filter(Boolean);
   if (!qs.length) { toast('No mistakes to fix yet. Go play a level.'); return; }
   logEvent('review_start', {questions: qs.length});
   const boss = {name: 'Past you', year: '', acc: 0, spd: [0, 0], ei: 0};
@@ -1006,11 +1480,12 @@ function startReview() {
   openGame(); renderQ();
 }
 function drillPool(lesson) { return Q.filter(q => lesson.k.includes(q.k)); }
+function drillGens(lesson) { return G.filter(g => lesson.k.includes(g.k)); }
 function openLesson(id) {
   const L = LESSONS.find(l => l.id === id); if (!L) return;
   lessonsDone[id] = lessonsDone[id] || {drilled: false}; store.set('lessons', lessonsDone);
   logEvent('lesson_open', {lesson: id, arena: L.t});
-  const n = Math.min(5, drillPool(L).length);
+  const n = Math.min(5, drillPool(L).length + drillGens(L).length * 3);
   run = null; openGame();
   $('#game-inner').innerHTML = `
     <div class="g-top"><button class="x-btn" id="g-close" aria-label="Close">✕</button><div class="g-title mono"><b>Lesson</b>${esc(trackOf(L.t).name)} · ${L.mins} min</div><span style="width:40px"></span></div>
@@ -1032,9 +1507,14 @@ function openLesson(id) {
 }
 function startDrill(L) {
   const r = rng(hashStr(L.id + ':' + Date.now()));
-  const pool = drillPool(L).slice();
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  const qs = pool.slice(0, 5).sort((a, b) => a.d - b.d);
+  const statics = drillPool(L).slice().sort((a, b) => (seenAt[a.id] || 0) - (seenAt[b.id] || 0) || r() - 0.5);
+  const made = []; drillGens(L).forEach(g => { for (let k = 0; k < 2; k++) { const x = buildGen(g, r); if (x) made.push(x); } });
+  const pool = [];
+  while (pool.length < 5 && (statics.length || made.length)) {
+    const fromGen = made.length && (!statics.length || r() < 0.5);
+    pool.push(fromGen ? made.splice(Math.floor(r() * made.length), 1)[0] : statics.shift());
+  }
+  const qs = pool.sort((a, b) => a.d - b.d).map(q => prepare(q, r));
   const era = ERAS[3];
   const boss = {name: era.name, year: era.year, acc: era.acc, spd: era.spd, ei: 3};
   run = {kind: 'drill', lesson: L, track: L.t, boss, qs, bots: qs.map(q => botAnswer(q, boss, r)), i: 0, you: [], yt: 0, bt: 0};
@@ -1094,10 +1574,14 @@ function answer(i) {
   const t = i < 0 ? limit : Math.round((performance.now() - run.qStart) / 100) / 10;
   const ok = i === q.a; const botOk = bot.pick === q.a;
   run.you.push(ok); run.yt += t; run.bt += bot.t; run.ypar = (run.ypar || 0) + par;
-  if (run.kind === 'level') { seen.add(q.id); store.set('seen', [...seen]); }
+  if (!q.gen && run.kind !== 'review') { seenAt[q.id] = Date.now(); store.set('seenAt', seenAt); }
   if (q.k) { const m = mastery[q.k] || {s: 0, r: 0}; m.s++; if (ok) m.r++; mastery[q.k] = m; store.set('mastery', mastery); }
   if (ok) delete mistakes[q.id];
-  else if (run.kind !== 'review') mistakes[q.id] = {pick: i, t, at: Date.now()};
+  else if (run.kind !== 'review') {
+    mistakes[q.id] = {pick: i, t, at: Date.now(), q: snapshot(q)};
+    const ids = Object.keys(mistakes).sort((x, y) => mistakes[y].at - mistakes[x].at);
+    ids.slice(60).forEach(id => delete mistakes[id]);   // keep the 60 most recent
+  }
   store.set('mistakes', mistakes);
   const c = q.k ? concept(q.k) : null;
 
@@ -1121,6 +1605,7 @@ function answer(i) {
   rv.className = 'panel reveal';
   rv.innerHTML = `<div class="reveal-head ${ok ? 'r' : 'w'}">${headTxt}</div>
     <p><strong>${esc(q.o[q.a])}.</strong> ${esc(q.why)}</p>
+    ${q.how && q.how.length ? `<div class="how"><div class="trick-label">How to get there</div><ol class="steps">${q.how.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
     ${c ? `<div class="trick"><div class="trick-label">The trick · ${esc(c.name)}</div><p>${esc(c.rule)}</p></div>` : ''}
     <p class="mono" style="font-size:.75rem">You: ${i < 0 ? 'no answer' : t + 's'} · human par ${par}s${i >= 0 ? (t <= par ? ' · under par ⚡' : ' · over par') : ''}${run.kind === 'review' ? '' : ` · ${esc(run.boss.name)}: ${bot.t}s`}</p>
     <div class="g-actions"><button class="btn btn-primary" id="next">${last ? 'See verdict' : 'Next question'}</button></div>`;
@@ -1427,7 +1912,7 @@ document.querySelectorAll('.demo-opt').forEach(b => b.onclick = () => {
 });
 
 // ───────────────── Save codes: move progress between devices without an account ─────────────────
-const SAVE_KEYS = ['levels2', 'track', 'seen', 'daily', 'streak', 'name', 'mastery', 'mistakes', 'lessons', 'runs'];
+const SAVE_KEYS = ['levels2', 'track', 'seenAt', 'daily', 'streak', 'name', 'mastery', 'mistakes', 'lessons', 'runs'];
 function makeSaveCode() {
   const data = {}; SAVE_KEYS.forEach(k => { const v = store.get(k, undefined); if (v !== undefined) data[k] = v; });
   return 'YD1-' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
