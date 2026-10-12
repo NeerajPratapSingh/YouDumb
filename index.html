@@ -820,6 +820,24 @@ const lessonsFor = t => t === 'mix' ? LESSONS.filter(l => l.id.endsWith('-1') &&
 // No ad ever shows during a question, and a player's first result is always ad-free.
 // Ads never appear on question screens (accidental clicks break AdSense policy).
 const ADS = { client: '', slots: { result: '', home: '' } };
+
+// ───────────────── Analytics ─────────────────
+// Paste your Google Analytics 4 Measurement ID (looks like 'G-ABC123XYZ'). Leave empty to turn tracking off.
+// Page views, countries and devices come automatically; the logEvent() calls below add game events.
+const GA4_ID = '';
+function logEvent(name, params) {
+  try { if (window.gtag) window.gtag('event', name, params || {}); } catch (e) {}
+}
+(function loadAnalytics() {
+  if (!GA4_ID) return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', GA4_ID);
+  const s = document.createElement('script'); s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+  document.head.appendChild(s);
+})();
 let adsLoaded = false;
 function loadAds() {
   if (adsLoaded || !ADS.client) return;
@@ -960,6 +978,7 @@ function startLevel(n, t = track) {
   const r = rng(hashStr(t + 'L' + n + ':' + Date.now()));
   const boss = {name: era.name, year: era.year, acc: L.acc, spd: era.spd, ei: L.ei};
   const qs = pickQuestions(L.mix, r, true, t);
+  logEvent('level_start', {arena: t, level: n, boss: era.name});
   run = {kind: 'level', track: t, n, boss, qs, bots: qs.map(q => botAnswer(q, boss, r)), i: 0, you: [], yt: 0, bt: 0};
   openGame(); renderQ();
 }
@@ -968,6 +987,7 @@ function startDaily() {
   if (daily && daily.date === date) { location.hash = ''; document.getElementById('daily').scrollIntoView(); return; }
   const r = rng(hashStr('daily:' + date));
   const qs = pickQuestions([1, 2, 2, 3, 3, 4], r, false, 'daily');
+  logEvent('daily_start', {date});
   const br = rng(hashStr('dailybot:' + date));
   run = {kind: 'daily', track: 'mix', date, boss: DAILY_BOSS, qs, bots: qs.map(q => botAnswer(q, DAILY_BOSS, br)), i: 0, you: [], yt: 0, bt: 0};
   openGame(); renderQ();
@@ -976,6 +996,7 @@ function startReview() {
   const ids = Object.entries(mistakes).sort((a, b) => b[1].at - a[1].at).slice(0, 5).map(e => +e[0]);
   const qs = ids.map(id => Q.find(q => q.id === id)).filter(Boolean);
   if (!qs.length) { toast('No mistakes to fix yet. Go play a level.'); return; }
+  logEvent('review_start', {questions: qs.length});
   const boss = {name: 'Past you', year: '', acc: 0, spd: [0, 0], ei: 0};
   run = {kind: 'review', track: track, boss, qs, bots: qs.map(q => ({pick: mistakes[q.id].pick, t: mistakes[q.id].t})), i: 0, you: [], yt: 0, bt: 0};
   openGame(); renderQ();
@@ -984,6 +1005,7 @@ function drillPool(lesson) { return Q.filter(q => lesson.k.includes(q.k)); }
 function openLesson(id) {
   const L = LESSONS.find(l => l.id === id); if (!L) return;
   lessonsDone[id] = lessonsDone[id] || {drilled: false}; store.set('lessons', lessonsDone);
+  logEvent('lesson_open', {lesson: id, arena: L.t});
   const n = Math.min(5, drillPool(L).length);
   run = null; openGame();
   $('#game-inner').innerHTML = `
@@ -1145,6 +1167,7 @@ function finish() {
       ${Object.keys(mistakes).length && run.kind !== 'review' ? `<button class="btn btn-ghost btn-sm" id="g-review">Fix my mistakes (${Object.keys(mistakes).length})</button>` : ''}
     </div>`;
   const res = Object.assign({ys, bs}, v);
+  logEvent(run.kind + '_complete', {arena: run.track, level: run.n || 0, lesson: run.lesson ? run.lesson.id : '', boss: run.boss.name, score: ys, bot_score: bs, total, win: !!v.win});
 
   if (run.kind === 'level' && v.win) {
     const stars = ys === total ? 3 : ys >= total - 1 ? 2 : 1;
@@ -1198,12 +1221,14 @@ function finish() {
   const enc = encodeURIComponent;
   if (!practice) {
   $('#share-row').innerHTML = `
-    <a class="share-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text=${enc(text + '\n' + url)}"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
-    <a class="share-btn" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg>LinkedIn</a>
-    <a class="share-btn" target="_blank" rel="noopener" href="https://wa.me/?text=${enc(text + '\n' + url)}"><svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.03c-.25.69-1.44 1.32-1.98 1.37-.5.05-1.13.07-1.83-.12-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.8-4.17-4.94-4.36-.15-.2-1.18-1.57-1.18-3s.75-2.13 1.01-2.42c.27-.3.58-.37.78-.37h.56c.18 0 .42-.07.66.5.25.6.84 2.05.91 2.2.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.45.52-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1.01 2.09 1.32 2.39 1.47.3.15.47.12.64-.07.17-.2.74-.86.94-1.16.2-.3.39-.25.66-.15.27.1 1.72.81 2.01.96.3.15.5.22.57.35.07.12.07.71-.18 1.4z"/></svg>WhatsApp</a>
+    <a class="share-btn" data-share="x" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?text=${enc(text + '\n' + url)}"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+    <a class="share-btn" data-share="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=${enc(url)}"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg>LinkedIn</a>
+    <a class="share-btn" data-share="whatsapp" target="_blank" rel="noopener" href="https://wa.me/?text=${enc(text + '\n' + url)}"><svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.03c-.25.69-1.44 1.32-1.98 1.37-.5.05-1.13.07-1.83-.12-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.8-4.17-4.94-4.36-.15-.2-1.18-1.57-1.18-3s.75-2.13 1.01-2.42c.27-.3.58-.37.78-.37h.56c.18 0 .42-.07.66.5.25.6.84 2.05.91 2.2.07.15.12.32.02.52-.1.2-.15.32-.3.5-.15.17-.31.39-.45.52-.15.15-.3.31-.13.6.17.3.77 1.27 1.65 2.06 1.13 1.01 2.09 1.32 2.39 1.47.3.15.47.12.64-.07.17-.2.74-.86.94-1.16.2-.3.39-.25.66-.15.27.1 1.72.81 2.01.96.3.15.5.22.57.35.07.12.07.71-.18 1.4z"/></svg>WhatsApp</a>
     <button class="share-btn" id="copy-grid"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>Copy result</button>`;
-  $('#copy-grid').onclick = () => copyText(text + '\n' + url);
+  document.querySelectorAll('[data-share]').forEach(a => a.addEventListener('click', () => logEvent('share', {method: a.dataset.share, kind: run ? run.kind : ''})));
+  $('#copy-grid').onclick = () => { logEvent('share', {method: 'copy'}); copyText(text + '\n' + url); };
   $('#c-copy').onclick = () => {
+    logEvent('challenge_link_copy', {kind: run ? run.kind : ''});
     const nm = ($('#c-name').value || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 16) || 'Someone';
     playerName = nm; store.set('name', nm);
     copyText(`${nm} scored ${ys}/${total} against ${run.boss.name}. Your turn:\n${url}#vs.${nm}.${ys}.${total}.${codeTag}`);
@@ -1305,7 +1330,7 @@ function renderArenas() {
     </button>`;
   }).join('');
   document.querySelectorAll('.arena').forEach(b => b.onclick = () => {
-    setTrack(b.dataset.t); renderHome();
+    setTrack(b.dataset.t); logEvent('arena_select', {arena: b.dataset.t}); renderHome();
     document.getElementById('ladder').scrollIntoView({behavior: 'smooth'});
   });
 }
@@ -1382,6 +1407,7 @@ function readChallenge() {
   const isDaily = !!d; const lvl = isDaily ? null : +lvlStr;
   const arena = TRACKS.find(x => x.id === ar) || TRACKS[0];
   el.className = 'vs-banner'; el.hidden = false;
+  logEvent('challenge_link_open', {kind: isDaily ? 'daily' : 'level', arena: arena.id});
   el.innerHTML = `<p><span>${esc(nm)}</span> scored ${s}/${t} on ${isDaily ? 'the daily run' : esc(arena.name) + ' level ' + lvl} and dares you to beat it.</p><button class="btn btn-primary btn-sm" id="vs-play">Accept</button>`;
   $('#vs-play').onclick = () => isDaily ? startDaily() : (lvl && LEVELS[lvl - 1] ? startLevel(lvl, arena.id) : null);
 }
@@ -1389,6 +1415,7 @@ function readChallenge() {
 // Hero demo
 document.querySelectorAll('.demo-opt').forEach(b => b.onclick = () => {
   const v = b.dataset.v;
+  logEvent('demo_answer', {correct: v === '3'});
   document.querySelectorAll('.demo-opt').forEach(x => { x.disabled = true; if (x.dataset.v === '3') x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
   $('#demo-out').innerHTML = v === '3'
     ? '<strong>Correct.</strong> You just beat a mistake chatbots made for years. Level 1 is next, against a bot from 1966.'
@@ -1408,7 +1435,7 @@ function readSaveCode(code) {
   if (!data || typeof data !== 'object') throw new Error('shape');
   return data;
 }
-$('#save-copy').onclick = () => copyText(makeSaveCode());
+$('#save-copy').onclick = () => { logEvent('save_code_copy'); copyText(makeSaveCode()); };
 $('#save-open').onclick = () => { const f = $('#save-form'); f.hidden = !f.hidden; if (!f.hidden) $('#save-input').focus(); };
 $('#save-form').onsubmit = e => {
   e.preventDefault();
@@ -1416,6 +1443,7 @@ $('#save-form').onsubmit = e => {
   try {
     const data = readSaveCode($('#save-input').value);
     SAVE_KEYS.forEach(k => { if (k in data) store.set(k, data[k]); });
+    logEvent('save_code_restore');
     msg.textContent = 'Progress restored. Reloading…'; msg.style.color = 'var(--win)'; msg.hidden = false;
     setTimeout(() => location.reload(), 600);
   } catch (x) {
