@@ -125,7 +125,7 @@ The layout is phone-first: the title, then the question, then the action. Moment
 ## Colors
 
 ### Primary
-- **Hot Magenta** (#ff3d8b): primary buttons, the locked-in answer, the current level rung, the selected arena, the player's name and score, emphasis words in headlines, the timer.
+- **Hot Magenta** (#ff3d8b): primary buttons, the locked-in answer, cleared level nodes, the selected arena, the player's name and score, emphasis words in headlines, the timer.
 
 ### Secondary
 - **Correct Cyan** (#2de2e6): correct answers, the reveal head when right, the focus ring, how-to labels.
@@ -134,7 +134,7 @@ The layout is phone-first: the title, then the question, then the action. Moment
 
 ### Neutral
 - **Plum Black** (#0d0710): the page ground, carried by the html element.
-- **Glass** (4.5% white, 8.5% raised): every panel, answer, tile and rung, with a magenta-tinted 1px line.
+- **Glass** (4.5% white, 8.5% raised): every panel, answer and tile, with a magenta-tinted 1px line.
 - **Text** (#fbeef5), **Muted** (#b89fb1), **Dim** (#947a8d): every step passes 4.5:1 on the ground.
 
 ### Named Rules
