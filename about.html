@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>About · YouDumb</title>
 <meta name="description" content="YouDumb is a free brain game where you climb 60 years of AI eras, learn a trick with every question, and stay sharp in the age of AI.">
-<meta name="theme-color" content="#050a1a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050a1a'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='900' font-size='34' text-anchor='middle' fill='%23ffc940'%3EyD%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0d0710">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0710'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='900' font-size='34' text-anchor='middle' fill='%23ff3d8b'%3EyD%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=Onest:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -14,17 +14,17 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-W6TS0L7G4E');</script>
 <style>
 :root {
-  --bg: #050a1a; --panel-hi: #14234d; --panel-lo: #0b1534; --line: rgba(109,147,255,0.22);
-  --fg: #eef2ff; --muted: #a9b8de; --dim: #8796c0; --gold: #ffc940; --info: #8fb0ff;
+  --bg: #0d0710; --panel-hi: rgba(255,236,246,0.06); --panel-lo: rgba(255,236,246,0.035); --line: rgba(255,61,139,0.16);
+  --fg: #fbeef5; --muted: #b89fb1; --dim: #947a8d; --gold: #ff3d8b; --info: #2de2e6;
   --f-display: 'Big Shoulders Display', 'Arial Narrow', system-ui, sans-serif;
   --f-body: 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-::selection { background: var(--gold); color: #07102a; }
+::selection { background: var(--gold); color: #0d0710; }
 html { background: var(--bg); padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); }
-body { margin: 0; background: transparent; background-image: radial-gradient(70% 420px at 50% -8%, rgba(70,110,230,0.28), transparent 70%); background-repeat: no-repeat;
+body { margin: 0; background: transparent; background-image: none; background-repeat: no-repeat;
   color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.65; padding-inline: 16px; -webkit-font-smoothing: antialiased; }
 .wrap { max-width: 720px; margin-inline: auto; padding-block: 0 48px; }
 nav { display: flex; justify-content: space-between; align-items: center; padding-block: 18px 8px; gap: 12px; }
@@ -32,12 +32,12 @@ nav { display: flex; justify-content: space-between; align-items: center; paddin
 .logo b { color: var(--gold); }
 .back { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 0.9rem; color: var(--gold); text-decoration: none; }
 .back svg { width: 1em; height: 1em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: conic-gradient(from 168deg at 22% -6%, transparent 0deg, rgba(150,180,255,0.22) 7deg, rgba(150,180,255,0.1) 13deg, transparent 19deg), conic-gradient(from 178deg at 80% -6%, transparent 0deg, rgba(255,214,130,0.2) 6deg, rgba(255,214,130,0.09) 12deg, transparent 18deg); }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(900px 500px at 75% -10%, rgba(255,61,139,0.22), transparent 70%), radial-gradient(600px 400px at -10% 30%, rgba(45,226,230,0.08), transparent 70%); }
 .eyebrow { display: none; }
 h1 { font-family: var(--f-display); font-weight: 900; font-size: clamp(2.8rem, 9vw, 4.2rem); line-height: 0.9; text-transform: uppercase; margin: 40px 0 10px; text-wrap: balance; }
 .updated { font-size: 0.8rem; font-weight: 600; color: var(--dim); }
 h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.7rem; text-transform: uppercase; line-height: 1; margin: 38px 0 10px; }
-p, li { color: #cdd6f2; max-width: 65ch; }
+p, li { color: #e6d3de; max-width: 65ch; }
 ul { padding-left: 1.2em; display: grid; gap: 6px; }
 strong { color: var(--fg); }
 a { color: var(--gold); text-underline-offset: 3px; }
