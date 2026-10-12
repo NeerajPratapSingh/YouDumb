@@ -1906,7 +1906,7 @@ const DEMOS = [
   {tag: 'AI trap', q: 'Which is bigger: 9.11 or 9.9?', o: ['9.11', '9.9', 'Equal'], a: 1, hint: 'Chatbots famously read this like software versions.', why: '9.9 is 9.90. Compare the tenths: 9 beats 1.'},
   {tag: 'AI trap', q: 'Which is bigger: 3.8 or 3.11?', o: ['3.8', '3.11', 'Equal'], a: 0, hint: 'Same trap, different numbers.', why: '3.8 is 3.80. Compare the tenths: 8 beats 1.'},
   {tag: 'AI trap', q: 'How many r\'s are in the word "carrier"?', o: ['1', '2', '3'], a: 2, hint: 'Letter counting trips up chatbots and tired humans.', why: 'ca-r-r-ie-r. Two together, one at the end.'},
-  {tag: 'Logic trap', q: 'A bat and a ball cost $1.10. The bat costs $1 more than the ball. How much is the ball?', o: ['10¢', '5¢', '1¢'], a: 1, hint: 'Most people\'s first answer is wrong.', why: 'Ball 5¢, bat $1.05. With 10¢ the bat would be $1.10 and the total $1.20.'},
+  {tag: 'Logic trap', q: 'A bat and a ball cost $1.10. The bat costs $1 more than the ball. How much is the ball?', o: ['10¢', '5¢', '1¢'], a: 1, hint: 'Most people\'s first answer is wrong.', why: 'If the ball is 5¢, the bat is $1 more: $1.05. Together that\'s $1.10. With a 10¢ ball the bat would be $1.10 and the total $1.20.'},
   {tag: 'Logic trap', q: 'How many months have 28 days?', o: ['1', '2', '12'], a: 2, hint: 'Read the question, not the one you expect.', why: 'Every month has at least 28 days.'},
   {tag: 'Logic trap', q: 'In a race you overtake the person in 2nd place. What place are you in?', o: ['1st', '2nd', '3rd'], a: 1, hint: 'Picture it before you answer.', why: 'You take their spot. To be 1st you\'d have to pass the leader.'},
   {tag: 'AI trap', q: 'Mary\'s father has five daughters: Nana, Nene, Nini, Nono. What\'s the fifth one called?', o: ['Nunu', 'Mary', 'Nina'], a: 1, hint: 'Pattern-completion is exactly what early chatbots did.', why: 'It says Mary\'s father. Mary is the fifth daughter.'},
@@ -1933,7 +1933,7 @@ function showDemo() {
     box.querySelectorAll('.demo-opt').forEach(x => { x.disabled = true; if (+x.dataset.j === d.a) x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
     $('#demo-out').innerHTML = ok
       ? `<strong>Correct.</strong> ${esc(d.why)} Level 1 is waiting, against a bot from 1966.`
-      : `<strong>It's ${esc(d.o[d.a])}.</strong> ${esc(d.why)} Same mistake the bots make. Level 1 should be gentle.`;
+      : `<strong>It's ${esc(d.o[d.a])}.</strong> ${esc(d.why)} ${d.tag === 'AI trap' ? 'Chatbots made the same mistake.' : 'Most people get this one wrong at first.'} Level 1 should be gentle.`;
     $('#demo-next').hidden = false;
   });
 }
