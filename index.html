@@ -106,6 +106,8 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
 .demo-opt:hover:not(:disabled) { border-color: var(--accent); }
 .demo-opt.right { background: var(--win-soft); border-color: var(--win); color: var(--win); }
 .demo-opt.wrong { background: var(--loss-soft); border-color: var(--loss); color: var(--loss); }
+.demo-next { margin-top: 10px; font-size: 0.72rem; }
+.demo-q { min-height: 2.4em; }
 .demo-out { margin-top: 16px; font-size: 0.9rem; color: var(--muted); min-height: 3em; }
 .demo-out strong { color: var(--fg); }
 
@@ -392,15 +394,12 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
       </div>
       <p class="fine">No signup. No download. Your phone works fine.</p>
     </div>
-    <div class="panel demo" aria-live="polite">
-      <div class="demo-top"><span class="eyebrow">Warm-up</span><span class="chip mono">AI trap</span></div>
-      <div class="demo-q">How many r's are in the word "strawberry"?</div>
-      <div class="demo-opts">
-        <button class="demo-opt" data-v="2">2</button>
-        <button class="demo-opt" data-v="3">3</button>
-        <button class="demo-opt" data-v="4">4</button>
-      </div>
+    <div class="panel demo" id="demo" aria-live="polite">
+      <div class="demo-top"><span class="eyebrow">Warm-up</span><span class="chip mono" id="demo-tag">AI trap</span></div>
+      <div class="demo-q" id="demo-q">How many r's are in the word "strawberry"?</div>
+      <div class="demo-opts" id="demo-opts"></div>
       <div class="demo-out" id="demo-out">Pick one. Plenty of chatbots got this wrong, in public, for years.</div>
+      <button class="link-btn demo-next" id="demo-next" hidden>Try another →</button>
     </div>
   </header>
 
@@ -1901,15 +1900,45 @@ function readChallenge() {
   $('#vs-play').onclick = () => isDaily ? startDaily() : (lvl && LEVELS[lvl - 1] ? startLevel(lvl, arena.id) : null);
 }
 
-// Hero demo
-document.querySelectorAll('.demo-opt').forEach(b => b.onclick = () => {
-  const v = b.dataset.v;
-  logEvent('demo_answer', {correct: v === '3'});
-  document.querySelectorAll('.demo-opt').forEach(x => { x.disabled = true; if (x.dataset.v === '3') x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
-  $('#demo-out').innerHTML = v === '3'
-    ? '<strong>Correct.</strong> You just beat a mistake chatbots made for years. Level 1 is next, against a bot from 1966.'
-    : '<strong>It\'s 3.</strong> st-r-awbe-r-r-y. You just made the same mistake the chatbots did. Level 1 should be gentle.';
-});
+// Hero demo: a rotating warm-up, never the same one twice in a row
+const DEMOS = [
+  {tag: 'AI trap', q: 'How many r\'s are in the word "strawberry"?', o: ['2', '3', '4'], a: 1, hint: 'Plenty of chatbots got this wrong, in public, for years.', why: 'st-r-awbe-r-r-y. Spell it out instead of guessing from the shape.'},
+  {tag: 'AI trap', q: 'Which is bigger: 9.11 or 9.9?', o: ['9.11', '9.9', 'Equal'], a: 1, hint: 'Chatbots famously read this like software versions.', why: '9.9 is 9.90. Compare the tenths: 9 beats 1.'},
+  {tag: 'AI trap', q: 'Which is bigger: 3.8 or 3.11?', o: ['3.8', '3.11', 'Equal'], a: 0, hint: 'Same trap, different numbers.', why: '3.8 is 3.80. Compare the tenths: 8 beats 1.'},
+  {tag: 'AI trap', q: 'How many r\'s are in the word "carrier"?', o: ['1', '2', '3'], a: 2, hint: 'Letter counting trips up chatbots and tired humans.', why: 'ca-r-r-ie-r. Two together, one at the end.'},
+  {tag: 'Logic trap', q: 'A bat and a ball cost $1.10. The bat costs $1 more than the ball. How much is the ball?', o: ['10¢', '5¢', '1¢'], a: 1, hint: 'Most people\'s first answer is wrong.', why: 'Ball 5¢, bat $1.05. With 10¢ the bat would be $1.10 and the total $1.20.'},
+  {tag: 'Logic trap', q: 'How many months have 28 days?', o: ['1', '2', '12'], a: 2, hint: 'Read the question, not the one you expect.', why: 'Every month has at least 28 days.'},
+  {tag: 'Logic trap', q: 'In a race you overtake the person in 2nd place. What place are you in?', o: ['1st', '2nd', '3rd'], a: 1, hint: 'Picture it before you answer.', why: 'You take their spot. To be 1st you\'d have to pass the leader.'},
+  {tag: 'AI trap', q: 'Mary\'s father has five daughters: Nana, Nene, Nini, Nono. What\'s the fifth one called?', o: ['Nunu', 'Mary', 'Nina'], a: 1, hint: 'Pattern-completion is exactly what early chatbots did.', why: 'It says Mary\'s father. Mary is the fifth daughter.'},
+  {tag: 'Logic trap', q: '5 machines make 5 widgets in 5 minutes. How long do 100 machines take to make 100 widgets?', o: ['100 min', '5 min', '20 min'], a: 1, hint: 'Find what one machine does first.', why: 'Each machine makes one widget in 5 minutes, however many machines there are.'},
+  {tag: 'Logic trap', q: 'Lily pads double every day and cover the lake on day 48. When was it half covered?', o: ['Day 24', 'Day 47', 'Day 46'], a: 1, hint: 'Doubling runs backwards.', why: 'It doubles daily, so half was just one day before full.'},
+  {tag: 'Brain trap', q: 'A plane crashes exactly on the US–Canada border. Where do they bury the survivors?', o: ['USA', 'Canada', 'Nowhere'], a: 2, hint: 'Read every word.', why: 'Survivors are alive. You don\'t bury them.'},
+  {tag: 'Logic trap', q: 'A farmer has 17 sheep. All but 9 run away. How many are left?', o: ['8', '9', '17'], a: 1, hint: 'Your brain wants to subtract.', why: '"All but 9" means 9 stayed.'},
+];
+let demoIdx = -1;
+function showDemo() {
+  let last = -1; try { last = +(localStorage.getItem('yd_demo') ?? -1); } catch (e) {}
+  let i; do { i = Math.floor(Math.random() * DEMOS.length); } while ((i === last || i === demoIdx) && DEMOS.length > 2);
+  demoIdx = i; try { localStorage.setItem('yd_demo', String(i)); } catch (e) {}
+  const d = DEMOS[i];
+  $('#demo-tag').textContent = d.tag;
+  $('#demo-q').textContent = d.q;
+  $('#demo-out').textContent = 'Pick one. ' + d.hint;
+  $('#demo-next').hidden = true;
+  const box = $('#demo-opts');
+  box.innerHTML = d.o.map((o, j) => `<button class="demo-opt" data-j="${j}">${esc(o)}</button>`).join('');
+  box.querySelectorAll('.demo-opt').forEach(b => b.onclick = () => {
+    const j = +b.dataset.j, ok = j === d.a;
+    logEvent('demo_answer', {correct: ok, demo: i});
+    box.querySelectorAll('.demo-opt').forEach(x => { x.disabled = true; if (+x.dataset.j === d.a) x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
+    $('#demo-out').innerHTML = ok
+      ? `<strong>Correct.</strong> ${esc(d.why)} Level 1 is waiting, against a bot from 1966.`
+      : `<strong>It's ${esc(d.o[d.a])}.</strong> ${esc(d.why)} Same mistake the bots make. Level 1 should be gentle.`;
+    $('#demo-next').hidden = false;
+  });
+}
+$('#demo-next').onclick = showDemo;
+showDemo();
 
 // ───────────────── Save codes: move progress between devices without an account ─────────────────
 const SAVE_KEYS = ['levels2', 'track', 'seenAt', 'daily', 'streak', 'name', 'mastery', 'mistakes', 'lessons', 'runs'];
