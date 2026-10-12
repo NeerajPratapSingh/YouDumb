@@ -56,7 +56,6 @@ rounded:
   tag: "4px"
   key: "8px"
   small-button: "11px"
-  rung: "12px"
   button: "14px"
   answer: "15px"
   tile: "18px"
@@ -101,10 +100,10 @@ components:
     backgroundColor: "{colors.glass}"
     textColor: "{colors.text}"
     rounded: "{rounded.tile}"
-  ladder-rung-current:
+  level-node-cleared:
     backgroundColor: "{colors.hot-magenta}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.rung}"
+    rounded: "{rounded.pill}"
 ---
 
 # Design System: YouDumb
@@ -121,7 +120,7 @@ The layout is phone-first: the title, then the question, then the action. Moment
 - Plum-black ground with a magenta glow from the top right and a faint cyan glow from the left.
 - Rounded glass panels (22px) and answers (15px). Buttons have a pressed magenta edge.
 - Lock-in sequence: the chosen answer fills magenta, a short beat, then cyan for correct or orange for wrong.
-- Quiz-show structure: arena board, era panels with level rungs, lessons as a running list.
+- Quiz-show structure: arena board, era panels with winding dotted level paths, lessons as a running list.
 
 ## Colors
 
@@ -166,16 +165,16 @@ The page uses a single 1120px column with a 16px gutter and 56px between section
 
 - **Hero:** title and actions on the left, the warm-up panel on the right. On phones the order is title, then the warm-up question, then the stacked full-width buttons, then the copy.
 - **Arena board:** 3 columns, dropping to 2 at 900px.
-- **Era panels:** 3, then 2, then 1, each holding five level rungs.
+- **Era panels:** 3, then 2, then 1, each holding a five-node path.
 - **Lessons:** a single-column list.
 - **Game screen:** a centred 660px column.
 
 ## Elevation & Depth
 
-The system is flat glass with a backdrop blur (14px) on panels. Depth comes from the ambient glow behind everything. The only lifted thing is the primary button and the current rung, which sit on a pressed edge.
+The system is flat glass with a backdrop blur (14px) on panels. Depth comes from the ambient glow behind everything. Primary buttons and cleared level nodes sit on a pressed edge.
 
 ### Shadow Vocabulary
-- **Pressed edge** (`box-shadow: 0 6px 0 #c4135f, 0 14px 32px rgba(255,61,139,0.38)`): primary buttons. The current rung uses a 4px version without the glow.
+- **Pressed edge** (`box-shadow: 0 6px 0 #c4135f, 0 14px 32px rgba(255,61,139,0.38)`): primary buttons. Cleared level nodes use a 5px version without the glow.
 
 ## Shapes
 
@@ -185,7 +184,7 @@ All shapes are rounded rectangles:
 - **Answers:** 15px.
 - **Buttons:** 14px.
 - **Small buttons:** 11px.
-- **Rungs:** 12px.
+- **Level nodes:** circles.
 - **Key badges and step numbers:** 8px.
 - **Tags:** 4px.
 - **Chips:** pills.
@@ -209,11 +208,8 @@ There are no clipped or angled silhouettes.
   - **Others:** fade to 50%.
   - **Bot's pick:** carries a small tag.
 
-### Level rungs
-- **Shape:** glass rows (12px) showing the number in display caps, a status word and yellow stars.
-- **Cleared:** a soft magenta fill.
-- **Current:** solid magenta with a pressed edge.
-- **Locked:** a bare number.
+### Level map
+Each era panel has a winding dotted path (3px dotted line, magenta at 34%) linking five round level nodes (58px). Cleared nodes are solid magenta on a pressed edge, with yellow stars underneath. The current node is white, bobbing gently, with a soft magenta ring. Locked nodes are hollow. The era year sits as a huge outlined numeral in the top-right corner.
 
 ### Arena tiles
 - **Style:** glass cards (18px).

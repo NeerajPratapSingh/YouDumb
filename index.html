@@ -189,31 +189,28 @@ section { padding-block: 56px; }
 
 /* Prize ladder: each era is a rival on the board, its levels are rungs */
 .ladder { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.era { position: relative; padding: 18px 16px 16px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.era-head { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: end; }
-.era-year { grid-column: 2; grid-row: 1; font-family: var(--f-display); font-weight: 900; font-size: 2.2rem; line-height: 0.9; color: var(--gold); letter-spacing: 0.02em; }
-.era-name { grid-column: 1; grid-row: 1; font-family: var(--f-display); font-weight: 900; font-size: 2rem; line-height: 0.9; letter-spacing: 0.02em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-.era-tag { grid-column: 1 / -1; color: var(--muted); font-size: 0.88rem; }
-.era-stats { grid-column: 1 / -1; display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; font-family: var(--f-label); font-weight: 600; font-size: 0.74rem; color: var(--muted); }
-.era-stats b { color: var(--fg); font-weight: 800; }
-.lock-pill { font-family: var(--f-label); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--gold); color: var(--gold); white-space: nowrap; }
-.pro-pill { font-family: var(--f-label); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 4px; background: var(--gold); color: var(--ink); }
-.rungs { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.node { --c: 14px; display: grid; grid-template-columns: 2.4em 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 9px 22px; border: 0; cursor: pointer; background: #22366e; color: var(--dim); text-align: left; font-family: var(--f-body); font-weight: 600; font-size: 0.92rem; transition: transform .18s var(--ease-out), background .2s; }
-.node::before { background: linear-gradient(180deg, #0f1b3f, #0a1431); }
-.node:hover { background: var(--rim-hi); }
-.node .rn { font-family: var(--f-display); font-weight: 900; font-size: 1.35rem; line-height: 1; color: var(--muted); }
-.node .rl { min-width: 0; }
-.node .rs { font-size: 0.8rem; letter-spacing: 2px; color: var(--star); }
-.node .rs i { font-style: normal; color: var(--dim); opacity: .5; }
-.node.done { background: #8a6a1a; color: var(--fg); }
-.node.done .rn { color: var(--gold); }
-.node.current { background: #fff1c2; color: var(--ink); font-weight: 800; }
-.node.current::before { background: linear-gradient(180deg, #ffd766 0%, var(--gold) 50%, #f0a800 100%); }
-.node.current .rn { color: var(--ink); }
-.node.current .rs { color: var(--ink); }
-.node.locked .rs { display: none; }
-.ladder-note { margin-top: 18px; font-size: 0.8rem; color: var(--dim); }
+.era { position: relative; overflow: hidden; padding: 20px 18px 10px; min-width: 0; }
+.era-year { position: absolute; right: -6px; top: -14px; font-family: var(--f-display); font-weight: 800; font-size: 6rem; line-height: 1; letter-spacing: 0; color: transparent; -webkit-text-stroke: 1px var(--line-2); pointer-events: none; user-select: none; }
+.era-head { position: relative; }
+.era-name { font-family: var(--f-display); font-weight: 900; font-size: 2rem; line-height: 0.95; letter-spacing: 0.02em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.era-tag { color: var(--muted); font-size: 0.86rem; }
+.era-stats { display: flex; gap: 14px; margin-top: 10px; font-family: var(--f-label); font-size: 0.7rem; color: var(--muted); }
+.era-stats b { color: var(--fg); font-weight: 700; }
+.lock-pill { font-family: var(--f-label); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); white-space: nowrap; }
+.pro-pill { font-family: var(--f-label); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; padding: 3px 7px; border-radius: 6px; background: var(--gold); color: var(--ink); }
+.path { position: relative; height: 470px; margin-top: 8px; }
+.path svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.path svg path { fill: none; stroke: var(--line-2); stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.node { position: absolute; transform: translate(-50%, -50%); width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 1.55rem; background: var(--bg-2); color: var(--dim); box-shadow: inset 0 0 0 2px var(--line); transition: transform .15s; }
+.node:hover { transform: translate(-50%, -50%) scale(1.07); }
+.node.done { background: var(--accent); color: var(--ink); box-shadow: 0 5px 0 var(--accent-deep); }
+.node.current { background: var(--fg); color: var(--ink); box-shadow: 0 5px 0 var(--muted), 0 0 0 6px var(--accent-soft); animation: bob 1.6s ease-in-out infinite; }
+.node.locked { cursor: pointer; }
+.node.locked::after { content: ''; position: absolute; width: 14px; height: 10px; bottom: 9px; border-radius: 3px; background: var(--dim); opacity: .0; }
+@keyframes bob { 0%,100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, calc(-50% - 5px)); } }
+.stars { position: absolute; transform: translate(-50%, 0); font-size: 0.72rem; letter-spacing: 1px; color: var(--star); white-space: nowrap; pointer-events: none; }
+.stars i { font-style: normal; color: var(--dim); }
+.ladder-note { margin-top: 16px; font-size: 0.8rem; color: var(--dim); font-family: var(--f-label); }
 
 /* Daily */
 .daily { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -476,10 +473,6 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
 .x-btn:hover { border-color: var(--line-2); background: var(--glass-2); }
 .share-btn { border-radius: 12px; border: 1px solid var(--line); background: var(--glass); padding: 10px 15px; }
 .share-btn:hover { border-color: var(--line-2); }
-.node { border-radius: 12px; border: 1px solid var(--line); background: var(--glass); padding: 9px 14px; }
-.node:hover { border-color: var(--line-2); background: var(--glass-2); }
-.node.done { background: var(--accent-soft); border-color: var(--line-2); }
-.node.current { background: var(--accent); border-color: var(--accent); color: var(--ink); box-shadow: 0 4px 0 var(--accent-deep); }
 .arenas { background: transparent; border: 0; padding: 0; gap: 12px; }
 .arena { border-radius: 18px; border: 1px solid var(--line); background: var(--glass); box-shadow: none; }
 .arena:hover { filter: none; border-color: var(--line-2); transform: translateY(-2px); }
@@ -494,7 +487,6 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
 .steps li::before { clip-path: none; border-radius: 8px; background: var(--accent-soft); color: var(--accent); width: 26px; height: 26px; font-size: 0.9rem; }
 .week span, .pips span, .r-grid i { transform: none; border-radius: 3px; }
 .toast { border-radius: 12px; }
-.era-year { color: var(--accent); }
 </style>
 <style>html{padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)} body{margin:0} img{max-width:100%}</style>
 </head>
@@ -3121,22 +3113,27 @@ document.addEventListener('keydown', e => {
 // ───────────────── Home rendering ─────────────────
 function renderLadder() {
   const cur = nextLevel();
-  // Prize ladder: each era is a rival panel, its five levels are rungs you climb.
+  const H = 470, top = 40, step = 92;
   $('#ladder-grid').innerHTML = ERAS.map((era, ei) => {
-    const rungs = LEVELS.filter(l => l.ei === ei).map(l => {
-      const n = l.n; const st = lv()[n] || 0;
+    const eraLevels = LEVELS.filter(l => l.ei === ei);
+    const pts = eraLevels.map((l, j) => ({x: 50 + Math.sin(j * 1.3 + ei * 0.9) * 26, y: top + j * step, l}));
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let k = 1; k < pts.length; k++) { const a = pts[k - 1], b = pts[k]; d += ` C ${a.x} ${a.y + step / 2} ${b.x} ${b.y - step / 2} ${b.x} ${b.y}`; }
+    const nodes = pts.map(p => {
+      const n = p.l.n; const st = lv()[n] || 0;
       const cls = st ? 'done' : n === cur ? 'current' : 'locked';
-      const label = st ? 'Cleared' : n === cur ? 'Play now' : '';
-      return `<li><button class="node ${cls}" data-n="${n}" aria-label="Level ${n}${st ? ', ' + st + ' stars' : ''}${cls === 'locked' ? ', locked' : ''}"><span class="rn">${n}</span><span class="rl">${label}</span><span class="rs" aria-hidden="true">${'★'.repeat(st)}<i>${'★'.repeat(3 - st)}</i></span></button></li>`;
+      const starStr = st ? '★'.repeat(st) + `<i>${'★'.repeat(3 - st)}</i>` : '';
+      return `<button class="node ${cls}" style="left:${p.x}%;top:${p.y}px" data-n="${n}" aria-label="Level ${n}${st ? ', ' + st + ' stars' : ''}${cls === 'locked' ? ', locked' : ''}">${n}</button>
+        ${starStr ? `<span class="stars" style="left:${p.x}%;top:${p.y + 32}px">${starStr}</span>` : ''}`;
     }).join('');
     return `<div class="panel era">
+      <div class="era-year" aria-hidden="true">${era.year}</div>
       <div class="era-head">
         <div class="era-name">${esc(era.name)}${era.gate ? (frontierOpen() ? ' <span class="pill strong">Unlocked</span>' : ` <span class="lock-pill">Locked · ${perfectCount()}/${GATE_N} perfect</span>`) : ''}</div>
-        <div class="era-year">${era.year}</div>
         <div class="era-tag">${esc(era.tag)}</div>
         <div class="era-stats"><span>Accuracy <b>~${Math.round(era.acc * 100)}%</b></span><span>Answers in <b>${era.spd[0]}–${era.spd[1]}s</b></span></div>
       </div>
-      <ol class="rungs">${rungs}</ol>
+      <div class="path"><svg viewBox="0 0 100 ${H}" preserveAspectRatio="none"><path d="${d}"/></svg>${nodes}</div>
     </div>`;
   }).join('');
   document.querySelectorAll('.node').forEach(b => b.onclick = () => {
