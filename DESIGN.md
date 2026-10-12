@@ -163,11 +163,21 @@ The layout is phone-first: the title, then the question, then the action. Moment
 
 The page uses a single 1120px column with a 16px gutter and 56px between sections (44px on phones).
 
+**The Two-Column Head Rule.** Every section head puts the title in the wide left column and the intro in a fixed 42ch right column, both sitting on the same baseline. Below 820px they stack.
+
 - **Hero:** title and actions on the left, the warm-up panel on the right. On phones the order is title, then the warm-up question, then the stacked full-width buttons, then the copy.
 - **Arena board:** 3 columns, dropping to 2 at 900px.
 - **Era panels:** 3, then 2, then 1, each holding a five-node path.
 - **Lessons:** a single-column list.
 - **Game screen:** a centred 660px column.
+
+### Motion
+The focal moment is the answer. Options stagger in (45ms apart) and the chosen one fills magenta and settles for the 650ms lock-in beat. Then the correct answer lights up with a cyan ring, a wrong pick shakes, and the scorer's number pops on the scoreboard. On the results screen the score counts up, the verdict wipes in left to right, and the result cells fill one by one. Supporting motion stays quiet:
+- Leaderboard rows rise in, capped at 320ms total.
+- The sign-up modal fades and lifts.
+- The level map's nodes pop in along the path when you switch arena.
+
+All motion uses `cubic-bezier(0.16, 1, 0.3, 1)`. With reduced motion on, every animation jumps straight to its end state, so the colour changes and results still show.
 
 ## Elevation & Depth
 
@@ -215,6 +225,9 @@ Each era panel has a winding dotted path (3px dotted line, magenta at 34%) linki
 - **Style:** glass cards (18px).
 - **Selected:** a magenta inset border, a soft magenta fill and a "Selected" tag.
 - **Content:** a magenta progress bar and a yellow star count.
+
+### Leaderboard
+A glass panel holding segmented tabs (all time, this week, today's daily, by arena). Rows show the rank in display caps (the top three in magenta), the name, and the score with a yellow star; your own row has a magenta border. The sign-up modal uses a solid plum card with a white "Continue with Google" button.
 
 ### Inputs
 - **Style:** plum fields with a magenta-tinted line.
