@@ -2543,6 +2543,19 @@ let mistakes = store.get('mistakes', {});   // {questionId: {pick, t, at}}
 let lessonsDone = store.get('lessons', {}); // {lessonId: {drilled: bool}}
 function conceptState(m) { if (!m || !m.s) return 'new'; const rate = m.r / m.s; return rate >= 0.75 && m.s >= 2 ? 'strong' : rate < 0.5 ? 'weak' : 'learning'; }
 let seenAt = store.get('seenAt', null) || Object.fromEntries((store.get('seen', []) || []).map(id => [id, 1])); // {questionId: last time seen}
+// Every question a player has answered, stored as short text hashes, so no question comes back: hand-written, generated or AI.
+const seenTxArr = store.get('seenTx', []) || [];
+const seenTx = new Set(seenTxArr);
+const txKey = q => hashStr(String(q.q).replace(/<[^>]+>/g, ' ').replace(/&(amp|lt|gt|quot|#39);/g, ' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + '|' + String(q.code || '').replace(/\s+/g, ' '));
+const isSeen = q => seenTx.has(txKey(q));
+let recentQ = store.get('recentQ', []) || [];   // last few question stems, sent to the AI so it avoids them
+function markSeen(q) {
+  const k = txKey(q); if (seenTx.has(k)) return;
+  seenTx.add(k); seenTxArr.push(k);
+  if (seenTxArr.length > 20000) seenTx.delete(seenTxArr.shift());
+  store.set('seenTx', seenTxArr);
+  recentQ.push(String(q.q).replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, ' ').slice(0, 90)); recentQ = recentQ.slice(-40); store.set('recentQ', recentQ);
+}
 let daily = store.get('daily', null);      // {date, you:[], bot:[], ys, bs, win}
 let streak = store.get('streak', {n: 0, last: null, days: []});
 let playerName = store.get('name', '');
@@ -2565,20 +2578,24 @@ const isUnlocked = (n, t = track) => n <= highest(t) + 1;
 // once the hand-written ones run out, generated questions take over, then the ones you saw longest ago.
 function pickQuestions(mix, r, useSeen, arena) {
   const inArena = x => (arena === 'mix' || arena === 'daily') ? x.t !== 'code' : x.t === arena;
-  const usedS = new Set(), usedG = new Set(); const out = [];
+  const usedS = new Set(), usedG = new Set(), usedT = new Set(); const out = [];
+  const ok = q => q && !usedT.has(txKey(q)) && !(useSeen && isSeen(q));
   mix.forEach(d => {
     const near = [d, d + 1, d - 1, d + 2, d - 2].filter(x => x >= 1 && x <= 4);
     let fresh = [], gens = [];
-    for (const dd of near) { fresh = Q.filter(q => inArena(q) && q.d === dd && !usedS.has(q.id) && !(useSeen && seenAt[q.id])); if (fresh.length) break; }
+    for (const dd of near) { fresh = Q.filter(q => inArena(q) && q.d === dd && !usedS.has(q.id) && !(useSeen && seenAt[q.id]) && ok(q)); if (fresh.length) break; }
     for (const dd of near) { gens = G.filter(g => inArena(g) && g.d === dd && !usedG.has(g.id)); if (gens.length) break; }
     let q = null;
     const useGen = gens.length && (!fresh.length || r() < (useSeen ? 0.4 : 0.5));
-    if (useGen) q = buildGen(gens[Math.floor(r() * gens.length)], r);
+    if (useGen) for (let n = 0; n < 8 && !q; n++) { q = buildGen(gens[Math.floor(r() * gens.length)], r); if (!ok(q)) q = null; }
+    if (!q && gens.length && !fresh.length) for (let n = 0; n < 12 && !q; n++) { q = buildGen(gens[Math.floor(r() * gens.length)], r); if (!ok(q)) q = null; }
     if (!q && fresh.length) q = fresh[Math.floor(r() * fresh.length)];
     if (!q) {
       const pool = Q.filter(x => inArena(x) && near.includes(x.d) && !usedS.has(x.id)).sort((a, b) => (seenAt[a.id] || 0) - (seenAt[b.id] || 0));
       q = pool[0] || Q.find(x => !usedS.has(x.id));
+      if (q) q = Object.assign({}, q, {_repeat: true});   // nothing new left here; an AI question replaces it if one is ready
     }
+    usedT.add(txKey(q));
     if (q.gen) usedG.add(q.gen); else usedS.add(q.id);
     out.push(prepare(q, r));
   });
@@ -2592,7 +2609,63 @@ function prepare(q, r) {
   else for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
   return Object.assign({}, q, {o, a: o.indexOf(q.o[q.a]), trap: q.trap != null ? o.indexOf(q.o[q.trap]) : undefined});
 }
-function snapshot(q) { return {id: q.id, gen: q.gen, t: q.t, d: q.d, cat: q.cat, k: q.k, q: q.q, code: q.code, o: q.o, a: q.a, trap: q.trap, why: q.why, how: q.how}; }
+function snapshot(q) { return {id: q.id, ai: q.ai, gen: q.gen, t: q.t, d: q.d, cat: q.cat, k: q.k, q: q.q, code: q.code, o: q.o, a: q.a, trap: q.trap, why: q.why, how: q.how}; }
+// ───────────────── AI questions ─────────────────
+// Fresh questions come from /api/ai, a Netlify function that holds the OpenRouter key server-side (never in this page).
+// Each batch is written by the model, then answered again cold in a second pass; only questions where both agree are kept.
+// They're cached per arena on this device and blended into levels. If the AI is unreachable, the built-in bank carries on.
+const AI = {on: /^https?:$/.test(location.protocol), busy: {}, fails: 0};
+let aiCache = store.get('aiq', {}) || {};
+const aiFresh = t => (aiCache[t] || []).filter(q => !isSeen(q));
+function aiTake(t, d, taken) {
+  const list = aiFresh(t).filter(q => !taken.has(txKey(q)));
+  if (!list.length) return null;
+  let i = list.findIndex(q => Math.abs(q.d - d) <= 1); if (i < 0) i = 0;
+  const q = list[i]; taken.add(txKey(q));
+  aiCache[t] = (aiCache[t] || []).filter(x => x !== q); store.set('aiq', aiCache);
+  return q;
+}
+async function aiPost(body) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 30000);
+  try {
+    const res = await fetch('/api/ai', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body), signal: ctl.signal});
+    if (!res.ok) throw new Error('ai ' + res.status);
+    return await res.json();
+  } finally { clearTimeout(tm); }
+}
+async function aiRefill(t, d) {
+  if (!AI.on || AI.busy[t] || AI.fails >= 3 || aiFresh(t).length >= 6) return;
+  AI.busy[t] = true;
+  try {
+    const avoid = [...aiFresh(t).map(q => q.q.replace(/&[a-z#0-9]+;/g, ' ').slice(0, 90)), ...recentQ.slice().reverse()].slice(0, 40);
+    const g = await aiPost({mode: 'gen', arena: t, d: d || 2, avoid});
+    let qs = (g.questions || []).filter(q => q && typeof q.q === 'string' && Array.isArray(q.o) && q.o.length === 4 && Number.isInteger(q.a) && !isSeen(q));
+    if (!qs.length) return;
+    const v = await aiPost({mode: 'verify', items: qs.map(q => ({q: q.q, code: q.code, options: q.o}))});
+    const have = new Set((aiCache[t] || []).map(txKey));
+    qs = qs.filter((q, i) => v.answers && v.answers[i] === q.a && !have.has(txKey(q)))
+      .map(q => ({id: 'ai:' + txKey(q), ai: true, t: q.t, d: Math.min(4, Math.max(1, +q.d || 2)), cat: String(q.cat || 'AI'), k: null,
+        q: esc(q.q), code: q.code || undefined, o: q.o.map(String), a: q.a, trap: Number.isInteger(q.trap) ? q.trap : undefined,
+        why: String(q.why || ''), how: (q.how || []).map(String)}));
+    aiCache[t] = [...(aiCache[t] || []), ...qs].slice(-24); store.set('aiq', aiCache);
+    AI.fails = 0; logEvent('ai_batch', {arena: t, kept: qs.length});
+  } catch (e) { AI.fails++; }
+  finally { AI.busy[t] = false; }
+}
+const levelD = n => { const L = LEVELS[Math.min(LEVELS.length, Math.max(1, n)) - 1]; return Math.round(L.mix.reduce((a, b) => a + b, 0) / L.mix.length); };
+// Repeats get swapped for AI questions first; then up to 2 more slots go to AI so every level has something brand new.
+function aiBlend(qs, t, r) {
+  const taken = new Set(qs.map(txKey)); let extra = 0;
+  const order = qs.map((_, i) => i).sort((a, b) => (qs[b]._repeat ? 1 : 0) - (qs[a]._repeat ? 1 : 0) || r() - 0.5);
+  for (const i of order) {
+    if (!qs[i]._repeat && extra >= 2) continue;
+    const q = aiTake(t, qs[i].d, taken);
+    if (!q) break;
+    if (!qs[i]._repeat) extra++;
+    qs[i] = prepare(q, r);
+  }
+  return qs;
+}
 // Human par: how long a sharp person needs to read and solve this question.
 // Reading at ~210 words a minute, ~3s per line of code to trace, plus thinking time that grows with difficulty.
 function parTime(q) {
@@ -2625,7 +2698,8 @@ function startLevel(n, t = track) {
   if (t !== track) setTrack(t);
   const r = rng(hashStr(t + 'L' + n + ':' + Date.now()));
   const boss = {name: era.name, year: era.year, acc: L.acc, spd: era.spd, ei: L.ei};
-  const qs = pickQuestions(L.mix, r, true, t);
+  const qs = aiBlend(pickQuestions(L.mix, r, true, t), t, r);
+  setTimeout(() => aiRefill(t, levelD(n + 1)), 400);
   logEvent('level_start', {arena: t, level: n, boss: era.name});
   run = {kind: 'level', track: t, n, boss, qs, bots: qs.map(q => botAnswer(q, boss, r)), i: 0, you: [], yt: 0, bt: 0};
   openGame(); renderQ();
@@ -2715,7 +2789,7 @@ function renderQ() {
   $('#game-inner').innerHTML = header() + `
     <div class="timer" id="timer"><div></div></div>
     <div class="panel q-card">
-      <div class="q-meta"><span class="cat">${esc(q.cat)}</span><span>Q${run.i + 1} of ${run.qs.length} · par ${par}s · <span id="t-left">${limit}</span>s left</span></div>
+      <div class="q-meta"><span class="cat">${esc(q.cat)}${q.ai ? ' · ✨ AI-made' : ''}</span><span>Q${run.i + 1} of ${run.qs.length} · par ${par}s · <span id="t-left">${limit}</span>s left</span></div>
       <div class="q-text">${q.q}</div>
       ${q.code ? `<div class="q-code">${esc(q.code)}</div>` : ''}
     </div>
@@ -2745,6 +2819,7 @@ function answer(i) {
   const ok = i === q.a; const botOk = bot.pick === q.a;
   run.you.push(ok); run.yt += t; run.bt += bot.t; run.ypar = (run.ypar || 0) + par;
   if (!q.gen && run.kind !== 'review') { seenAt[q.id] = Date.now(); store.set('seenAt', seenAt); }
+  if (run.kind !== 'review') markSeen(q);
   if (q.k) { const m = mastery[q.k] || {s: 0, r: 0}; m.s++; if (ok) m.r++; mastery[q.k] = m; store.set('mastery', mastery); }
   if (ok) delete mistakes[q.id];
   else if (run.kind !== 'review') {
@@ -2778,8 +2853,10 @@ function answer(i) {
     ${q.how && q.how.length ? `<div class="how"><div class="trick-label">How to get there</div><ol class="steps">${q.how.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
     ${c ? `<div class="trick"><div class="trick-label">The trick · ${esc(c.name)}</div><p>${esc(c.rule)}</p></div>` : ''}
     <p class="mono" style="font-size:.75rem">You: ${i < 0 ? 'no answer' : t + 's'} · human par ${par}s${i >= 0 ? (t <= par ? ' · under par ⚡' : ' · over par') : ''}${run.kind === 'review' ? '' : ` · ${esc(run.boss.name)}: ${bot.t}s`}</p>
+    ${q.ai ? '<p class="mono" style="font-size:.75rem">✨ Written and double-checked by AI. <button class="link-btn" id="ai-report" style="font-size:.75rem">Answer looks wrong? Report it</button></p>' : ''}
     <div class="g-actions"><button class="btn btn-primary" id="next">${last ? 'See verdict' : 'Next question'}</button></div>`;
   $('.hint-keys').replaceWith(rv);
+  const rep = $('#ai-report'); if (rep) rep.onclick = () => { logEvent('ai_report', {arena: q.t, q: q.q.slice(0, 95), ans: String(q.o[q.a]).slice(0, 40)}); rep.replaceWith('Thanks, reported.'); };
   const nx = $('#next'); nx.focus({preventScroll: true});
   nx.onclick = () => { if (last) finish(); else { run.i++; renderQ(); window.scrollTo(0, 0); $('#game').scrollTop = 0; } };
   rv.scrollIntoView({behavior: 'smooth', block: 'nearest'});
@@ -2990,7 +3067,7 @@ function renderArenas() {
     </button>`;
   }).join('');
   document.querySelectorAll('.arena').forEach(b => b.onclick = () => {
-    setTrack(b.dataset.t); logEvent('arena_select', {arena: b.dataset.t}); renderHome();
+    setTrack(b.dataset.t); logEvent('arena_select', {arena: b.dataset.t}); renderHome(); aiRefill(b.dataset.t, levelD(nextLevel(b.dataset.t)));
     document.getElementById('ladder').scrollIntoView({behavior: 'smooth'});
   });
 }
@@ -3101,7 +3178,7 @@ function demoFromBank() {
       const pool = Q.filter(x => x.t !== 'code' && (x.d || 1) <= 2 && !x.code);
       q = pool[Math.floor(Math.random() * pool.length)];
     }
-    if (!q || q.code || !short(q.o) || q.q.length > 170) continue;
+    if (!q || q.code || !short(q.o) || q.q.length > 170 || isSeen(q)) continue;
     q = prepare(q, Math.random);
     const tr = (TRACKS.find(t => t.id === q.t) || {}).name || q.cat;
     return {tag: q.trap != null ? 'Trap' : q.cat, q: q.q.replace(/<[^>]+>/g, ''), o: q.o.map(String), a: q.a,
@@ -3177,6 +3254,7 @@ try { navigator.storage && navigator.storage.persist && navigator.storage.persis
 window.addEventListener('hashchange', readChallenge);
 readChallenge();
 renderHome();
+setTimeout(() => aiRefill(track, levelD(nextLevel(track))), 2500);
 </script>
 
 </body>
