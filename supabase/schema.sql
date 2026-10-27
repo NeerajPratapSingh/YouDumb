@@ -172,3 +172,136 @@ grant execute on function public.record_level(text, int, int) to authenticated;
 grant execute on function public.sync_progress(text, jsonb) to authenticated;
 grant execute on function public.submit_daily(date, int, numeric) to authenticated;
 grant execute on function public.get_leaderboard(text, text, date) to anon, authenticated;
+
+-- ═════════ Humans vs AI: daily battle, ratings, fronts (added Oct 2026) ═════════
+alter table public.profiles add column if not exists rating int not null default 1000;
+alter table public.profiles add column if not exists battles int not null default 0;
+alter table public.profiles add column if not exists front text;
+do $$ begin
+  alter table public.profiles add constraint profiles_front_len check (front is null or length(front) between 2 and 40);
+exception when duplicate_object then null; end $$;
+
+-- One battle per day, written by the daily job (scripts/make-battle.mjs) with the service key.
+-- questions: [{q, code, options[4], answer, why, how[], cat, rating, ai:[{model, pick}]}]
+create table if not exists public.battles (
+  day date primary key,
+  questions jsonb not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.battle_answers (
+  user_id uuid not null references public.profiles on delete cascade,
+  day date not null,
+  idx int not null check (idx between 0 and 4),
+  choice int not null check (choice between -1 and 3),
+  correct boolean not null,
+  ms int not null,
+  delta int not null,
+  front text,
+  created_at timestamptz not null default now(),
+  primary key (user_id, day, idx)
+);
+create index if not exists battle_answers_day_idx on public.battle_answers (day);
+alter table public.battles enable row level security;          -- no policies: answers stay server-side
+alter table public.battle_answers enable row level security;
+drop policy if exists "read own answers" on public.battle_answers;
+create policy "read own answers" on public.battle_answers for select using (auth.uid() = user_id);
+
+-- Today's battle without the answer key, plus what the caller already answered.
+create or replace function public.get_battle(p_day date default null)
+returns jsonb language plpgsql security definer set search_path = public stable as $$
+declare d date := coalesce(p_day, current_date); b jsonb; mine jsonb;
+begin
+  select questions into b from battles where day = d;
+  if b is null then return null; end if;
+  select coalesce(jsonb_agg(jsonb_build_object('idx', a.idx, 'choice', a.choice, 'correct', a.correct, 'delta', a.delta,
+           'answer', (b -> a.idx ->> 'answer')::int, 'why', b -> a.idx -> 'why', 'how', b -> a.idx -> 'how', 'ai', b -> a.idx -> 'ai') order by a.idx), '[]'::jsonb)
+    into mine from battle_answers a where a.user_id = auth.uid() and a.day = d;
+  return jsonb_build_object('day', d,
+    'questions', (select jsonb_agg(jsonb_build_object('q', x -> 'q', 'code', x -> 'code', 'options', x -> 'options', 'cat', x -> 'cat', 'rating', x -> 'rating') order by n)
+                  from jsonb_array_elements(b) with ordinality as t(x, n)),
+    'mine', mine);
+end $$;
+
+-- Answer one round. Checked and rated on the server; returns the key, the AI's picks and the rating change.
+create or replace function public.answer_battle(p_day date, p_idx int, p_choice int, p_ms int)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid(); b jsonb; q jsonb; ans int; ok boolean; qr int; r int; e numeric; dlt int; fr text;
+begin
+  if uid is null then raise exception 'not signed in'; end if;
+  select rating, front into r, fr from profiles where id = uid for update;
+  if r is null then raise exception 'pick a username first'; end if;
+  if p_day <> current_date then raise exception 'battle closed'; end if;
+  select questions into b from battles where day = p_day;
+  if b is null or p_idx < 0 or p_idx >= jsonb_array_length(b) then raise exception 'no such round'; end if;
+  if exists (select 1 from battle_answers where user_id = uid and day = p_day and idx = p_idx) then raise exception 'already answered'; end if;
+  q := b -> p_idx; ans := (q ->> 'answer')::int; ok := p_choice = ans;
+  qr := coalesce((q ->> 'rating')::int, 1000);
+  e := 1 / (1 + power(10, (qr - r) / 400.0));
+  dlt := round(20 * ((case when ok then 1 else 0 end) - e));
+  if ok and dlt < 1 then dlt := 1; end if;
+  update profiles set rating = greatest(100, rating + dlt), battles = battles + (case when p_idx = 0 then 1 else 0 end) where id = uid;
+  insert into battle_answers (user_id, day, idx, choice, correct, ms, delta, front)
+    values (uid, p_day, p_idx, p_choice, ok, least(greatest(coalesce(p_ms, 0), 0), 600000), dlt, fr);
+  return jsonb_build_object('correct', ok, 'answer', ans, 'why', q -> 'why', 'how', q -> 'how', 'ai', q -> 'ai', 'delta', dlt, 'rating', greatest(100, r + dlt));
+end $$;
+
+-- The war score: every right answer today is a point for humanity, every miss a point for AI.
+create or replace function public.get_war(p_day date default null)
+returns jsonb language sql security definer set search_path = public stable as $$
+  with t as (select * from battle_answers where day = coalesce(p_day, current_date))
+  select jsonb_build_object(
+    'humans', (select count(*) from t where correct),
+    'ai', (select count(*) from t where not correct),
+    'players', (select count(distinct user_id) from t),
+    'fronts', coalesce((select jsonb_agg(f) from (
+        select jsonb_build_object('front', front, 'humans', count(*) filter (where correct), 'ai', count(*) filter (where not correct)) as f
+        from t where front is not null group by front order by count(*) desc limit 8) s), '[]'::jsonb));
+$$;
+
+-- Leaderboards: rating, today's battle and fronts join the existing kinds.
+create or replace function public.get_leaderboard2(p_kind text, p_arena text default null, p_day date default null)
+returns table (rank bigint, username text, score numeric, seconds numeric, is_me boolean, extra text)
+language plpgsql security definer set search_path = public stable as $$
+begin
+  if p_kind = 'rating' then
+    return query
+      with r as (select p.id, p.username, p.rating::numeric as score, p.front, rank() over (order by p.rating desc) as rk from profiles p where p.battles > 0)
+      select r.rk, r.username, r.score, null::numeric, r.id = auth.uid(), r.front from r
+      where r.rk <= 50 or r.id = auth.uid() order by r.rk limit 51;
+  elsif p_kind = 'battle' then
+    return query
+      with s as (select a.user_id, count(*) filter (where a.correct)::numeric as score, round(sum(a.ms) / 1000.0, 1) as secs
+                 from battle_answers a where a.day = coalesce(p_day, current_date) group by a.user_id),
+      r as (select s.user_id, p.username, s.score, s.secs, p.front, rank() over (order by s.score desc, s.secs asc) as rk from s join profiles p on p.id = s.user_id)
+      select r.rk, r.username, r.score, r.secs, r.user_id = auth.uid(), r.front from r
+      where r.rk <= 50 or r.user_id = auth.uid() order by r.rk limit 51;
+  elsif p_kind = 'fronts' then
+    return query
+      with f as (select p.front, round(avg(p.rating))::numeric as score, count(*) as n from profiles p
+                 where p.front is not null and p.battles > 0 group by p.front having count(*) >= 2)
+      select rank() over (order by f.score desc), f.front, f.score, f.n::numeric,
+             f.front = (select front from profiles where id = auth.uid()), f.n || ' fighters' from f order by 1 limit 50;
+  else
+    return query select l.rank, l.username, l.score, l.seconds, l.is_me, null::text from get_leaderboard(p_kind, p_arena, p_day) l;
+  end if;
+end $$;
+
+-- Let players set their front (city or college) and see their own rating.
+create or replace function public.set_front(p_front text)
+returns text language plpgsql security definer set search_path = public as $$
+declare f text := nullif(btrim(p_front), '');
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if f is not null and length(f) not between 2 and 40 then raise exception 'front must be 2–40 characters'; end if;
+  update profiles set front = f where id = auth.uid();
+  return f;
+end $$;
+
+revoke all on function public.answer_battle(date, int, int, int) from public, anon;
+revoke all on function public.set_front(text) from public, anon;
+grant execute on function public.answer_battle(date, int, int, int) to authenticated;
+grant execute on function public.set_front(text) to authenticated;
+grant execute on function public.get_battle(date) to anon, authenticated;
+grant execute on function public.get_war(date) to anon, authenticated;
+grant execute on function public.get_leaderboard2(text, text, date) to anon, authenticated;

@@ -20,3 +20,17 @@ Takes about 15 minutes. Everything here is free.
    - Never share the `service_role` key.
 
 Until step 6 is done, the site works exactly as before: there's no sign-up gate and the leaderboard section stays hidden.
+
+## Daily battle (Humans vs AI)
+
+1. **Update the database.** Run the latest `supabase/schema.sql` again in the SQL Editor. It is safe to re-run, and it adds the battle, rating and fronts tables and functions.
+2. **Add repository secrets.** In GitHub, open the repo's Settings, then Secrets and variables, then Actions, and add:
+   - `OPENROUTER_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`, found under Project Settings, then API. It must stay secret. Never put it in the website.
+3. **Optional: choose the models.** Under the Variables tab:
+   - `BATTLE_MODELS` sets which models make up the AI army, as a comma-separated list of OpenRouter model IDs.
+   - `BATTLE_WRITER` sets the model that writes the questions.
+4. **Run it once.** Go to Actions, open Daily battle, and click Run workflow. After that it runs by itself every day at 05:37 IST. It costs a few rupees a day, and players never trigger an AI call.
+
+Until this is set up, the site runs a practice battle with simulated AI answers. Practice-battle ratings are kept on each player's own device.

@@ -418,6 +418,7 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
   .hero .ctas { order: 3; margin-top: 4px; }
   .hero .lede { order: 4; margin-top: 4px; }
   .hero .fine { order: 5; margin-top: 0; }
+  .hero .war { order: 6; margin-top: 0; max-width: none; }
   .daily, .plans { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
@@ -538,6 +539,53 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
 .ladder.pop-in .node:not(.current) { animation: node-in .4s var(--ease-out) both; animation-delay: calc(mod(var(--i, 0), 5) * 70ms + 120ms); }
 @keyframes node-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.4); } }
 .reveal { animation: rise .4s var(--ease-out) .1s both; }
+
+/* Humans vs AI */
+.war { margin-top: 26px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+.war:empty { display: none; }
+.war-top { display: flex; justify-content: space-between; gap: 10px; font-family: var(--f-label); font-size: 0.74rem; font-weight: 700; }
+.war-label { color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+.war-sub { color: var(--muted); font-weight: 600; text-align: right; }
+.war-score { display: flex; justify-content: space-between; align-items: end; font-family: var(--f-display); font-weight: 900; font-size: 2.4rem; line-height: 0.9; }
+.war-score small { display: block; font-family: var(--f-label); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.war-h { color: var(--win); }
+.war-a { color: var(--loss); text-align: right; }
+.war-bar { height: 8px; border-radius: 4px; background: var(--loss); overflow: hidden; }
+.war-bar > div { height: 100%; background: var(--win); border-radius: 4px 0 0 4px; transition: width .8s var(--ease-out); }
+.battle-line { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; color: var(--muted); }
+.battle-line b { color: var(--fg); }
+.delta { font-family: var(--f-display); font-weight: 900; font-size: 1.6rem; line-height: 1; }
+.delta.up { color: var(--win); }
+.delta.down { color: var(--loss); }
+.ai-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ai-label { font-family: var(--f-label); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.ai-pick { padding: 4px 9px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--line); background: var(--glass); }
+.ai-pick b { margin-left: 4px; }
+.ai-pick.r { border-color: rgba(45,226,230,0.45); color: var(--win); }
+.ai-pick.w { border-color: rgba(255,122,61,0.45); color: var(--loss); }
+.r-rating { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 14px; background: var(--accent-soft); border: 1px solid var(--line-2); }
+.r-rating .delta { font-size: 2.4rem; }
+.r-rating span:last-child { display: flex; flex-direction: column; text-align: left; font-size: 0.95rem; }
+.r-rating b { font-family: var(--f-display); font-size: 1.4rem; }
+.r-rating small { color: var(--muted); font-size: 0.78rem; }
+.pts-line { font-size: 0.85rem; color: var(--muted); }
+.pts-line b { color: var(--accent); font-family: var(--f-display); font-size: 1.1rem; }
+.rating-big { font-family: var(--f-display); font-weight: 900; font-size: 4.4rem; line-height: 0.85; color: var(--accent); display: flex; align-items: baseline; gap: 10px; }
+.rating-big small { font-family: var(--f-label); font-size: 0.9rem; font-weight: 800; color: var(--fg); letter-spacing: 0.04em; text-transform: uppercase; }
+.rank-track { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.rank-track span { display: flex; flex-direction: column; gap: 2px; padding: 6px 4px; border-radius: 8px; background: var(--glass); border: 1px solid transparent; text-align: center; min-width: 0; }
+.rank-track b { font-family: var(--f-display); font-weight: 800; font-size: 0.82rem; text-transform: uppercase; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-track small { font-size: 0.64rem; color: var(--dim); }
+.rank-track .past b { color: var(--muted); }
+.rank-track .on { border-color: var(--accent); background: var(--accent-soft); }
+.rank-track .on b { color: var(--accent); }
+.streak-row { display: flex; align-items: center; gap: 12px; font-size: 0.86rem; color: var(--muted); }
+.streak-row b { color: var(--fg); font-family: var(--f-display); font-size: 1.2rem; }
+.streak-row .week { flex: 1; }
+.r-grid.small i { width: 26px; height: 12px; }
+.lb-front { display: inline-block; margin-left: 8px; font-size: 0.74rem; font-weight: 600; color: var(--dim); }
+.auth-form.stack { flex-direction: column; }
+@media (max-width: 480px) { .rank-track { grid-template-columns: repeat(3, 1fr); } .war-score { font-size: 2rem; } }
 </style>
 <style>html{padding-block:env(safe-area-inset-top,0px) env(safe-area-inset-bottom,0px)} body{margin:0} img{max-width:100%}</style>
 </head>
@@ -548,8 +596,9 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
   <nav>
     <div class="logo">you<b>dumb</b></div>
     <div class="nav-right">
-      <span class="chip hide-sm">Level <strong id="nav-level">1</strong></span>
-      <span class="chip">Streak <strong id="nav-streak">0</strong></span>
+      <span class="chip" title="Your rating">Rating <strong id="nav-rating">1000</strong></span>
+      <span class="chip hide-sm">Streak <strong id="nav-streak">0</strong></span>
+      <span hidden id="nav-level">1</span>
       <button class="chip chip-btn" id="nav-auth" hidden>Sign up</button>
     </div>
   </nav>
@@ -558,13 +607,13 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
 
   <header class="hero">
     <div>
-      <h1>AI got smarter every year.<br><em>Did you?</em></h1>
-      <p class="lede">Pick your arena: logic, math, aptitude, words, data, business, street smarts or code. Start against a chatbot from 1966 and climb until you face today's best models. Every question teaches you a trick you keep.</p>
+      <h1>AI is winning.<br><em>Help.</em></h1>
+      <p class="lede">Every day the machines take five shots at humanity. Answer them right to raise your rating and hold the line. Then train for free, as long as you like, in nine arenas.</p>
       <div class="ctas">
-        <button class="btn btn-primary" id="hero-play">Play level 1</button>
-        <a class="btn btn-ghost" href="#daily">Today's daily</a>
+        <button class="btn btn-primary" id="hero-battle">Fight today's battle</button>
+        <button class="btn btn-ghost" id="hero-play">Practice</button>
       </div>
-      <p class="fine">60 years of AI · 30 levels · 1 brain. No signup, no download, your phone works fine.</p>
+      <div class="war panel" id="war" aria-live="polite"></div>
     </div>
     <div class="panel demo" id="demo" aria-live="polite">
       <div class="demo-top"><span class="eyebrow">Warm-up</span><span class="chip mono" id="demo-tag">AI trap</span></div>
@@ -623,17 +672,18 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
   <section id="daily">
     <div class="sec-head">
       <div>
-        <h2>Today's boss: GPT‑4</h2>
+        <h2>Today's battle</h2>
+        <div class="onair" id="battle-day">Day 1</div>
       </div>
-      <p>Same six questions for everyone, one shot per day. Share your grid, keep your streak, and send the link to the friend who thinks they're smarter than you.</p>
+      <p>Five rounds, the same for everyone. Real AI models already answered them, and some got it wrong. Beat a hard round for a big rating jump; miss an easy one and you drop.</p>
     </div>
     <div class="daily">
       <div class="panel daily-card" id="daily-card"></div>
       <div class="panel daily-card">
-        <h3 class="card-h">Your streak</h3>
-        <div class="streak-big" id="streak-big">0<small>days</small></div>
-        <div class="week" id="week"></div>
-        <p class="muted">Miss a day and it resets to zero.</p>
+        <h3 class="card-h">Your rating</h3>
+        <div class="rating-big" id="rating-big">1000</div>
+        <div class="rank-track" id="rank-track"></div>
+        <div class="streak-row"><span>Streak <b id="streak-big">0</b></span><div class="week" id="week"></div></div>
       </div>
     </div>
   </section>
@@ -641,14 +691,15 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; margin-top
   <section id="leaderboard" hidden>
     <div class="sec-head">
       <div><h2>Global leaderboard</h2></div>
-      <p>Everyone who plays, ranked. Climb ladders for stars, or win today's daily run on score, then speed.</p>
+      <p>Ranked by rating from the daily battles. Fronts pit cities and colleges against each other. Stars come from practice.</p>
     </div>
     <div class="panel lb-panel">
       <div class="lb-bar">
         <div class="lb-tabs" role="tablist" aria-label="Leaderboard">
-          <button class="lb-tab" role="tab" data-k="alltime">All time</button>
-          <button class="lb-tab" role="tab" data-k="week">This week</button>
-          <button class="lb-tab" role="tab" data-k="daily">Today's daily</button>
+          <button class="lb-tab" role="tab" data-k="rating">Rating</button>
+          <button class="lb-tab" role="tab" data-k="battle">Today's battle</button>
+          <button class="lb-tab" role="tab" data-k="fronts">Fronts</button>
+          <button class="lb-tab" role="tab" data-k="week">Stars this week</button>
           <button class="lb-tab" role="tab" data-k="arena">By arena</button>
         </div>
         <select id="lb-arena" aria-label="Arena" hidden></select>
@@ -2959,7 +3010,7 @@ function pips(arr, total) {
   let h = ''; for (let i = 0; i < total; i++) h += `<span class="${arr[i] === true ? 'r' : arr[i] === false ? 'w' : ''}"></span>`; return `<div class="pips">${h}</div>`;
 }
 function header() {
-  const title = run.kind === 'daily' ? `<b>Daily run</b>${run.date}`
+  const title = run.kind === 'battle' ? `<b>Battle · Day ${battleDayNo(run.date)}</b>Humans vs AI · rated` : run.kind === 'daily' ? `<b>Daily run</b>${run.date}`
     : run.kind === 'review' ? `<b>Fix my mistakes</b>Questions you got wrong before`
     : run.kind === 'drill' ? `<b>Drill · ${esc(run.lesson.title)}</b>vs ${run.boss.name} · ${run.boss.year}`
     : `<b>${esc(trackOf(run.track).short)} · Level ${run.n}</b>vs ${run.boss.name} · ${run.boss.year}`;
@@ -2993,7 +3044,7 @@ function renderQ() {
     bar.style.transform = `scaleX(${left / limit})`;
     tl.textContent = Math.ceil(left);
     if (left < 5) $('#timer').classList.add('hot');
-    if (left <= 0) { answer(-1); return; }
+    if (left <= 0) { run.kind === 'battle' ? lockIn(-1) : answer(-1); return; }
     timerRAF = requestAnimationFrame(tick);
   };
   timerRAF = requestAnimationFrame(tick);
@@ -3003,6 +3054,11 @@ function lockIn(i) {
   if (!run || run.answered || run.lockAt) return;
   run.lockAt = performance.now(); cancelAnimationFrame(timerRAF);
   document.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (+b.dataset.i === i) b.classList.add('locked'); });
+  if (run.kind === 'battle') {
+    const r = run, ms = run.lockAt - run.qStart;
+    Promise.all([resolveBattleRound(i, ms), new Promise(res => setTimeout(res, LOCK_MS))]).then(() => { if (run === r) answer(i); });
+    return;
+  }
   setTimeout(() => answer(i), LOCK_MS);
 }
 function answer(i) {
@@ -3015,6 +3071,7 @@ function answer(i) {
   const t = i < 0 ? limit : Math.round(((tapAt || performance.now()) - run.qStart) / 100) / 10;
   const ok = i === q.a; const botOk = bot.pick === q.a;
   run.you.push(ok); run.yt += t; run.bt += bot.t; run.ypar = (run.ypar || 0) + par;
+  const pts = (run.kind === 'level' || run.kind === 'drill') ? practicePoints(ok, t, par) : 0; run.pts = (run.pts || 0) + pts;
   if (!q.gen && run.kind !== 'review') { seenAt[q.id] = Date.now(); store.set('seenAt', seenAt); }
   if (run.kind !== 'review') markSeen(q);
   if (q.k) { const m = mastery[q.k] || {s: 0, r: 0}; m.s++; if (ok) m.r++; mastery[q.k] = m; store.set('mastery', mastery); }
@@ -3046,12 +3103,15 @@ function answer(i) {
     ? (ok ? 'Fixed. That one\'s yours now.' : i < 0 ? 'Time\'s up. It stays on your list.' : 'Still wrong. Read the trick below.')
     : i < 0 ? 'Time\'s up.' : ok ? (botOk ? (t < bot.t ? 'Right, and faster than the bot.' : 'Right. So was the bot.') : 'Right. The bot fell for it.') : (botOk ? 'Wrong. The bot got it.' : 'Wrong. At least the bot did too.');
   const last = run.i === run.qs.length - 1;
+  const headShown = run.kind === 'battle' ? headTxt.replace(/the bot/g, 'the AI') : headTxt;
   const rv = document.createElement('div');
   rv.className = 'panel reveal';
-  rv.innerHTML = `<div class="reveal-head ${ok ? 'r' : 'w'}">${headTxt}</div>
+  rv.innerHTML = `<div class="reveal-head ${ok ? 'r' : 'w'}">${headShown}</div>
     <p><strong>${esc(q.o[q.a])}.</strong> ${esc(q.why)}</p>
     ${q.how && q.how.length ? `<div class="how"><div class="trick-label">How to get there</div><ol class="steps">${q.how.map(s => `<li>${esc(s)}</li>`).join('')}</ol></div>` : ''}
     ${c ? `<div class="trick"><div class="trick-label">The trick · ${esc(c.name)}</div><p>${esc(c.rule)}</p></div>` : ''}
+    ${run.kind === 'battle' ? battleRevealHTML(q) : ''}
+    ${pts ? `<p class="pts-line"><b>+${pts}</b> practice points${pts > 10 ? ' · speed bonus' : ''}</p>` : ''}
     <p class="mono" style="font-size:.75rem">You: ${i < 0 ? 'no answer' : t + 's'} · human par ${par}s${i >= 0 ? (t <= par ? ' · under par' : ' · over par') : ''}${run.kind === 'review' ? '' : ` · ${esc(run.boss.name)}: ${bot.t}s`}</p>
     ${q.ai ? '<p class="mono" style="font-size:.75rem">✨ Written and double-checked by AI. <button class="link-btn" id="ai-report" style="font-size:.75rem">Answer looks wrong? Report it</button></p>' : ''}
     <div class="g-actions"><button class="btn btn-primary" id="next">${last ? 'See verdict' : 'Next question'}</button></div>`;
@@ -3077,6 +3137,7 @@ function verdict(ys, bs, yt, bt, total, boss, burn, ypar) {
 
 function shareText(res) {
   const grid = run.you.map(x => x ? '🟩' : '🟥').join('');
+  if (run.kind === 'battle') { const dl = run.deltas.reduce((a, b) => a + b, 0); return `YouDumb · Battle Day ${battleDayNo(run.date)}\nHumans ${res.ys} – AI ${res.bs} ${res.emoji}\n${grid}\nRating ${myRating()} (${dl >= 0 ? '+' : ''}${dl})\nAI is winning. Help.`; }
   const label = run.kind === 'daily' ? `YouDumb daily ${run.date}` : `YouDumb · ${trackOf(run.track).name} · level ${run.n}`;
   const line = res.win ? `Beat ${run.boss.name} (${run.boss.year}) ${res.ys}–${res.bs}` : `Lost to ${run.boss.name} (${run.boss.year}) ${res.ys}–${res.bs}`;
   return `${label}\n${line} ${res.emoji}\n${grid}\nThink you can beat it?`;
@@ -3099,6 +3160,7 @@ function finish() {
     ? (ys === total ? {win: true, emoji: '🧠', cls: 'win', head: 'All fixed. That\'s how you actually get smarter.', sub: 'Those tricks are yours now. Your past self is shaking.'}
       : ys ? {win: true, emoji: '📈', cls: 'win', head: `Fixed ${ys} of ${total}.`, sub: 'The rest stay on your list until you get them right.'}
       : {win: false, emoji: '🔁', cls: 'loss', head: 'Same mistakes, same you.', sub: 'Read the tricks below, then run it back.'})
+    : run.kind === 'battle' ? battleVerdict(ys, bs, total)
     : verdict(ys, bs, run.yt, run.bt, total, run.boss, trackOf(run.track).burn, run.ypar || 0);
   const runsDone = (store.get('runs', 0) || 0) + 1; store.set('runs', runsDone);
   const practice = run.kind === 'review' || run.kind === 'drill';
@@ -3120,6 +3182,17 @@ function finish() {
     const L = lv(run.track); L[run.n] = Math.max(L[run.n] || 0, stars); store.set('levels2', allLevels);
     recordLevel(run.track, run.n, stars);
   }
+  if (run.pts) { xp += run.pts; store.set('xp', xp); }
+  if (run.kind === 'battle') {
+    const delta = run.deltas.reduce((a, b) => a + b, 0);
+    daily = {kind: 'battle', date: run.date, you: run.you, bot: botArr, ys, bs, yt: Math.round(run.yt * 10) / 10, win: v.win, emoji: v.emoji, head: v.head, delta, rating: myRating(), sent: true};
+    store.set('daily', daily); renderRatingChip(); renderWar(); renderLeaderboard();
+    if (streak.last !== run.date) {
+      streak.n = streak.last === dayKey(-1) ? streak.n + 1 : 1;
+      streak.last = run.date; streak.days = (streak.days || []).concat(run.date).slice(-7);
+      store.set('streak', streak);
+    }
+  }
   if (run.kind === 'daily') {
     daily = {date: run.date, you: run.you, bot: botArr, ys, bs, yt: Math.round(run.yt * 10) / 10, win: v.win, emoji: v.emoji, head: v.head};
     store.set('daily', daily); submitDaily();
@@ -3130,18 +3203,20 @@ function finish() {
     }
   }
   const text = shareText(res);
-  const codeTag = run.kind === 'daily' ? 'D' : run.track + '-L' + run.n;
+  const codeTag = (run.kind === 'daily' || run.kind === 'battle') ? 'D' : run.track + '-L' + run.n;
   const nextN = run.kind === 'level' ? run.n + 1 : null;
   const nextIsGate = nextN && LEVELS[nextN - 1] && ERAS[LEVELS[nextN - 1].ei].gate;
   const nextLocked = nextIsGate && !frontierOpen(run.track);
 
   $('#game-inner').innerHTML = `
-    <div class="g-top"><button class="x-btn" id="g-close" aria-label="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button><div class="g-title mono"><b>${run.kind === 'daily' ? 'Daily verdict' : run.kind === 'review' ? 'Mistakes review' : run.kind === 'drill' ? 'Drill · ' + esc(run.lesson.title) : esc(trackOf(run.track).short) + ' · Level ' + run.n}</b>${run.kind === 'review' ? 'vs your past self' : `vs ${esc(run.boss.name)} · ${run.boss.year}`}</div><span style="width:40px"></span></div>
+    <div class="g-top"><button class="x-btn" id="g-close" aria-label="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button><div class="g-title mono"><b>${run.kind === 'battle' ? 'Battle · Day ' + battleDayNo(run.date) : run.kind === 'daily' ? 'Daily verdict' : run.kind === 'review' ? 'Mistakes review' : run.kind === 'drill' ? 'Drill · ' + esc(run.lesson.title) : esc(trackOf(run.track).short) + ' · Level ' + run.n}</b>${run.kind === 'review' ? 'vs your past self' : `vs ${esc(run.boss.name)} · ${run.boss.year}`}</div><span style="width:40px"></span></div>
     <div class="panel result">
       <div class="r-final"><span data-count="${ys}" style="color:${v.win ? 'var(--win)' : 'var(--fg)'}">${ys}</span><span class="dash">–</span><span data-count="${bs}" style="color:${v.win ? 'var(--fg)' : 'var(--loss)'}">${bs}</span></div>
       <div class="r-labels"><span>You</span><span>${esc(run.boss.name)}</span></div>
       <h2 class="r-head ${v.cls}">${esc(v.head)}</h2>
       <p class="r-sub">${esc(v.sub)}</p>
+      ${run.kind === 'battle' ? (() => { const dl = run.deltas.reduce((a, b) => a + b, 0), r = myRating(); return `<div class="r-rating"><span class="delta ${dl >= 0 ? 'up' : 'down'}">${dl >= 0 ? '+' : ''}${dl}</span><span>Rating <b>${r}</b><small>${esc(rankOf(r))}${run.battle.server ? '' : ' · practice battle'}</small></span></div>`; })() : ''}
+      ${run.pts ? `<p class="pts-line"><b>+${run.pts}</b> practice points · ${xp.toLocaleString('en-IN')} total</p>` : ''}
       <div class="r-grid" aria-label="You ${ys} of ${total}, ${esc(run.boss.name)} ${bs} of ${total}"><div><small>YOU</small>${run.you.map((x, k) => `<i class="${x ? 'r' : 'w'}" style="--i:${k}"></i>`).join('')}</div><div><small>BOT</small>${botArr.map((x, k) => `<i class="${x ? 'r' : 'w'}" style="--i:${k + 1}"></i>`).join('')}</div></div>
       ${practice ? '' : `<div class="share-row" id="share-row"></div>
       <div class="challenge">
@@ -3156,7 +3231,7 @@ function finish() {
         ? (nextN && nextN <= LEVELS.length ? `<button class="btn btn-primary" id="g-next">${nextLocked ? `Frontier locked · ${perfectCount(run.track)}/${GATE_N} perfect` : nextIsGate ? 'Enter the frontier' : 'Level ' + nextN}</button>` : '')
         : `<button class="btn btn-primary" id="g-retry">Run it back</button>`) : ''}
       ${run.kind === 'drill' ? `<button class="btn btn-primary" id="g-redrill">Drill again</button>` : ''}
-      <button class="btn btn-ghost" id="g-map">${run.kind === 'daily' ? 'Play the ladder' : run.kind === 'drill' ? 'Back to lessons' : 'Back to map'}</button>
+      <button class="btn btn-ghost" id="g-map">${run.kind === 'battle' ? 'Train in the arenas' : run.kind === 'daily' ? 'Play the ladder' : run.kind === 'drill' ? 'Back to lessons' : 'Back to map'}</button>
     </div>`;
   fillAds($('#game-inner'));
   countUp($('#game-inner'));
@@ -3182,7 +3257,7 @@ function finish() {
   };
   }
   $('#g-close').onclick = closeGame;
-  const backTo = run.kind === 'drill' ? 'lessons' : 'ladder';
+  const backTo = run.kind === 'drill' ? 'lessons' : run.kind === 'battle' ? 'arenas' : 'ladder';
   $('#g-map').onclick = () => { closeGame(); document.getElementById(backTo).scrollIntoView(); };
   const rt = run.track;
   const gn = $('#g-next'); if (gn) gn.onclick = () => startLevel(nextN, rt);
@@ -3234,21 +3309,22 @@ function renderLadder() {
 let cdTimer = null;
 function renderDaily() {
   const card = $('#daily-card');
-  const today = dayKey();
-  if (daily && daily.date === today) {
+  const today = dayKey(); const dayNo = battleDayNo(today);
+  $('#battle-day').textContent = `Day ${dayNo} · Humans vs AI`;
+  if (battleDone()) {
     const grid = daily.you.map(x => x ? '🟩' : '🟥').join('');
-    card.innerHTML = `      <h3>${daily.emoji} ${daily.ys}–${daily.bs} vs GPT-4</h3>
-      <p class="muted">${esc(daily.head)}</p>
-      <div class="grid-emoji">${grid}</div>
-      <div><div class="count-label">Next run in</div><div class="countdown" id="cd">--:--:--</div></div>
+    card.innerHTML = `      <h3>Humans ${daily.ys} – AI ${daily.bs}</h3>
+      <p class="muted">${esc(daily.head)} Rating ${daily.delta >= 0 ? '+' : ''}${daily.delta} today.</p>
+      <div class="r-grid small"><div>${daily.you.map((x, k) => `<i class="${x ? 'r' : 'w'}" style="--i:${k}"></i>`).join('')}</div></div>
+      <div><div class="count-label">Next battle in</div><div class="countdown" id="cd">--:--:--</div></div>
       <button class="btn btn-ghost btn-sm" id="daily-copy" style="align-self:flex-start">Copy my result</button>`;
-    $('#daily-copy').onclick = () => copyText(`YouDumb daily ${daily.date}\n${daily.win ? 'Beat' : 'Lost to'} GPT-4 ${daily.ys}–${daily.bs} ${daily.emoji}\n${grid}\n${baseUrl()}`);
+    $('#daily-copy').onclick = () => copyText(`YouDumb · Battle Day ${dayNo}\nHumans ${daily.ys} – AI ${daily.bs} ${daily.emoji}\n${grid}\nRating ${daily.rating} (${daily.delta >= 0 ? '+' : ''}${daily.delta})\nAI is winning. Help.\n${baseUrl()}`);
   } else {
-    card.innerHTML = `      <h3>6 questions. 1 attempt. GPT‑4 has already answered.</h3>
-      <p class="muted">Logic, math, aptitude, business and street smarts, from warm-up to galaxy brain. No code, so anyone can play. GPT‑4 answers in under 3 seconds.</p>
-      <div><div class="count-label">Closes in</div><div class="countdown" id="cd">--:--:--</div></div>
-      <button class="btn btn-primary" id="daily-play" style="align-self:flex-start">Play today's run</button>`;
-    $('#daily-play').onclick = startDaily;
+    card.innerHTML = `      <h3>5 rounds. The AI already answered.</h3>
+      <p class="muted">Logic, numbers, words and traps that trip up chatbots. One attempt per day, and it counts for your rating.</p>
+      <div><div class="count-label">Battle closes in</div><div class="countdown" id="cd">--:--:--</div></div>
+      <button class="btn btn-primary" id="daily-play" style="align-self:flex-start">Fight today's battle</button>`;
+    $('#daily-play').onclick = startBattle;
   }
   clearInterval(cdTimer);
   const upd = () => { const n = new Date(); const t = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1) - n; const el = $('#cd'); if (!el) return;
@@ -3258,7 +3334,10 @@ function renderDaily() {
 function renderStreak() {
   const live = streak.last === dayKey() || streak.last === dayKey(-1) ? streak.n : 0;
   $('#nav-streak').textContent = live;
-  $('#streak-big').innerHTML = `${live}<small>${live === 1 ? 'day' : 'days'}</small>`;
+  $('#streak-big').textContent = live;
+  const r = myRating(); $('#rating-big').innerHTML = `${r}<small>${esc(rankOf(r))}</small>`;
+  $('#rank-track').innerHTML = RANKS.slice().reverse().map(([min, name]) => `<span class="${rankOf(r) === name ? 'on' : r >= min ? 'past' : ''}"><b>${esc(name)}</b><small>${min || '<900'}</small></span>`).join('');
+  renderRatingChip();
   const days = new Set(streak.days || []);
   $('#week').innerHTML = [-6, -5, -4, -3, -2, -1, 0].map(o => `<span class="${days.has(dayKey(o)) ? 'on' : ''}" title="${dayKey(o)}"></span>`).join('');
 }
@@ -3339,8 +3418,12 @@ function renderHome() {
   const ha = $('#home-ad'); if (!ha.dataset.done) { ha.dataset.done = '1'; ha.innerHTML = adHTML('home'); fillAds(ha); }
   $('#nav-level').textContent = n;
   const hp = $('#hero-play');
-  hp.textContent = highest() ? `Continue ${T.short} · level ${n}` : `Play ${T.short} · level 1`;
+  hp.textContent = highest() ? `Practice · level ${n}` : 'Practice';
   hp.onclick = () => startLevel(n);
+  const hb = $('#hero-battle');
+  hb.textContent = battleDone() ? `Battle done · ${daily.ys}–${daily.bs}` : "Fight today's battle";
+  hb.onclick = startBattle;
+  renderWar();
   $('#ladder-eyebrow').textContent = `Ladder · ${T.name}`;
   renderArenas(); renderLadder(); renderLessons(); renderDaily(); renderStreak();
 }
@@ -3356,7 +3439,7 @@ function readChallenge() {
   el.className = 'vs-banner'; el.hidden = false;
   logEvent('challenge_link_open', {kind: isDaily ? 'daily' : 'level', arena: arena.id});
   el.innerHTML = `<p><span>${esc(nm)}</span> scored ${s}/${t} on ${isDaily ? 'the daily run' : esc(arena.name) + ' level ' + lvl} and dares you to beat it.</p><button class="btn btn-primary btn-sm" id="vs-play">Accept</button>`;
-  $('#vs-play').onclick = () => isDaily ? startDaily() : (lvl && LEVELS[lvl - 1] ? startLevel(lvl, arena.id) : null);
+  $('#vs-play').onclick = () => isDaily ? startBattle() : (lvl && LEVELS[lvl - 1] ? startLevel(lvl, arena.id) : null);
 }
 
 // Hero demo: a rotating warm-up, never the same one twice in a row
@@ -3435,6 +3518,126 @@ function showDemo() {
 $('#demo-next').onclick = showDemo;
 showDemo();
 
+// ───────────────── Humans vs AI: the daily battle, rating and war score ─────────────────
+// Five rated rounds a day, the same for everyone. Real AI models answered them once, ahead of time
+// (scripts/make-battle.mjs), so playing never costs an API call. Without the server, a simulated battle runs locally.
+const LAUNCH_DAY = '2026-10-28';
+const battleDayNo = d => Math.max(1, Math.round((Date.parse(d) - Date.parse(LAUNCH_DAY)) / 864e5) + 1);
+const RANKS = [[1800, 'Beyond AI'], [1500, 'Frontier'], [1300, 'GPT-4'], [1100, 'GPT-3'], [900, 'GPT-2'], [0, 'ELIZA']];
+const rankOf = r => RANKS.find(([min]) => r >= min)[1];
+let localRating = store.get('rating', null) || {r: 1000, battles: 0};
+let warLocal = store.get('warLocal', null) || {h: 0, a: 0};
+let battleCache = null;
+const myRating = () => (me && me.username && typeof me.rating === 'number') ? me.rating : localRating.r;
+const eloDelta = (r, qr, ok) => { const e = 1 / (1 + Math.pow(10, (qr - r) / 400)); let d = Math.round(20 * ((ok ? 1 : 0) - e)); if (ok && d < 1) d = 1; return d; };
+const ratedOnline = () => ACCOUNTS_ON && sb && me && me.username;
+
+function localBattle(day) {
+  const r = rng(hashStr('battle:' + day));
+  const qs = pickQuestions([1, 2, 3, 3, 4], r, false, 'daily');
+  const army = [{model: 'GPT-4o', acc: 0.8}, {model: 'Claude', acc: 0.84}, {model: 'Gemini', acc: 0.76}];
+  const br = rng(hashStr('battle-ai:' + day));
+  const questions = qs.map(q => {
+    const ai = army.map(m => ({model: m.model, pick: botAnswer(q, {acc: m.acc, ei: 5, spd: [1, 2]}, br).pick}));
+    const fail = ai.filter(a => a.pick !== q.a).length / ai.length;
+    return Object.assign({}, q, {rating: Math.round(880 + 80 * q.d + 420 * fail), aiPanel: ai});
+  }).sort((a, b) => a.rating - b.rating);
+  return {day, server: false, questions};
+}
+async function loadBattle() {
+  const day = dayKey();
+  if (battleCache && battleCache.day === day && (battleCache.server || !sb)) return battleCache;
+  if (sb) {
+    try {
+      const {data} = await sb.rpc('get_battle', {p_day: day});
+      if (data && Array.isArray(data.questions) && data.questions.length === 5) return battleCache = {day, server: true, questions: data.questions, mine: data.mine || []};
+    } catch (e) {}
+  }
+  return battleCache = localBattle(day);
+}
+const battleDone = () => daily && daily.date === dayKey() && daily.kind === 'battle';
+
+async function startBattle() {
+  if (battleDone()) { document.getElementById('daily').scrollIntoView({behavior: 'smooth'}); return; }
+  if (ACCOUNTS_ON && !(me && me.username)) { pendingLevel = {battle: true}; try { sessionStorage.setItem('yd_pending', JSON.stringify(pendingLevel)); } catch (e) {} openAuth(me ? 'username' : 'battle'); return; }
+  const b = await loadBattle();
+  const answered = new Map((b.mine || []).map(m => [m.idx, m]));
+  const qs = b.questions.map((x, k) => {
+    const base = b.server
+      ? {id: `b:${b.day}:${k}`, t: 'mix', d: Math.min(4, Math.max(1, Math.round((x.rating - 880) / 140))), cat: x.cat || 'Battle', q: esc(String(x.q)), code: x.code || undefined, o: x.options.map(String), a: -9, rating: x.rating, why: '', how: []}
+      : Object.assign({}, x, {id: `b:${b.day}:${k}`});
+    return base;
+  });
+  const boss = {name: 'AI', year: 2026, acc: 0.8, spd: [1, 2.5], ei: 5};
+  const br = rng(hashStr('battle-t:' + b.day));
+  const bots = qs.map(q => ({pick: q.aiPanel ? majority(q.aiPanel) : -1, t: Math.round((1 + br() * 1.6) * 10) / 10}));
+  logEvent('battle_start', {day: b.day, server: b.server});
+  run = {kind: 'battle', track: 'mix', date: b.day, battle: b, boss, qs, bots, i: 0, you: [], yt: 0, bt: 0, deltas: [], rating0: myRating()};
+  // Rounds already answered on another device are replayed as done.
+  for (let k = 0; k < qs.length && answered.has(k); k++) {
+    const m = answered.get(k); Object.assign(qs[k], {a: m.answer, why: m.why || '', how: m.how || []});
+    qs[k].aiPanel = (m.ai || []); bots[k].pick = majority(qs[k].aiPanel);
+    run.you.push(!!m.correct); run.deltas.push(m.delta || 0); run.i = k + 1;
+  }
+  if (run.i >= qs.length) { finish(); return; }
+  openGame(); renderQ();
+}
+function majority(panel) {
+  if (!panel || !panel.length) return -1;
+  const c = {}; panel.forEach(p => c[p.pick] = (c[p.pick] || 0) + 1);
+  return +Object.entries(c).sort((a, b) => b[1] - a[1])[0][0];
+}
+// Called during the lock-in beat: the server checks the answer and moves your rating.
+async function resolveBattleRound(i, ms) {
+  const q = run.qs[run.i], idx = run.i;
+  if (run.battle.server) {
+    const {data, error} = await sb.rpc('answer_battle', {p_day: run.date, p_idx: idx, p_choice: i, p_ms: Math.round(ms)});
+    if (error || !data) { toast('Connection hiccup. That round counts as missed.'); q.a = i === 0 ? 1 : 0; run.deltas.push(0); return; }
+    Object.assign(q, {a: data.answer, why: data.why || '', how: data.how || []});
+    q.aiPanel = data.ai || []; run.bots[idx].pick = majority(q.aiPanel);
+    run.deltas.push(data.delta); if (me) me.rating = data.rating;
+  } else {
+    const d = eloDelta(localRating.r, q.rating, i === q.a);
+    localRating.r = Math.max(100, localRating.r + d); if (idx === 0) localRating.battles++;
+    store.set('rating', localRating); run.deltas.push(d);
+  }
+  if (i === q.a) warLocal.h++; else warLocal.a++;
+  store.set('warLocal', warLocal);
+}
+function battleRevealHTML(q) {
+  const d = run.deltas[run.i] || 0, r = myRating();
+  const panel = (q.aiPanel || []).map(p => `<span class="ai-pick ${p.pick === q.a ? 'r' : 'w'}">${esc(p.model)} <b>${p.pick >= 0 ? 'ABCD'[p.pick] : '–'}</b></span>`).join('');
+  return `<div class="battle-line"><span class="delta ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d}</span><span>Rating <b>${r}</b> · ${esc(rankOf(r))}</span></div>
+    ${panel ? `<div class="ai-panel"><span class="ai-label">How the AI answered</span>${panel}</div>` : ''}`;
+}
+function battleVerdict(ys, bs, total) {
+  if (ys === total) return {win: true, emoji: '🛡️', cls: 'win', head: 'Flawless. The machines got nothing today.', sub: 'Five for five. Humanity owes you one.'};
+  if (ys > bs) return {win: true, emoji: '⚔️', cls: 'win', head: 'You held the line.', sub: `Humans ${ys}, AI ${bs}. Come back tomorrow, it will be harder.`};
+  if (ys === bs) return {win: false, emoji: '🤝', cls: 'loss', head: 'A draw. The machines are not impressed.', sub: 'One more right answer and you win the day. Train, then return tomorrow.'};
+  return {win: false, emoji: '🤖', cls: 'loss', head: `AI took Day ${battleDayNo(run.date)}.`, sub: 'The machines win this one. Practice in the arenas and take it back tomorrow.'};
+}
+
+// War score bar on the home page.
+async function renderWar() {
+  const el = $('#war'); if (!el) return;
+  let h, a, label, sub;
+  if (ACCOUNTS_ON && sb) {
+    try { const {data} = await sb.rpc('get_war', {p_day: dayKey()}); if (data) { h = data.humans; a = data.ai; label = `Day ${battleDayNo(dayKey())} · live`; sub = `${data.players} fighting today`; } } catch (e) {}
+  }
+  if (h === undefined) { h = warLocal.h; a = warLocal.a; label = 'Your war so far'; sub = 'Every right battle answer is a point for humanity'; }
+  const tot = Math.max(1, h + a), pct = Math.round(h / tot * 100);
+  el.innerHTML = `<div class="war-top"><span class="war-label">${esc(label)}</span><span class="war-sub">${esc(sub)}</span></div>
+    <div class="war-score"><span class="war-h"><small>Humans</small>${h.toLocaleString('en-IN')}</span><span class="war-a"><small>AI</small>${a.toLocaleString('en-IN')}</span></div>
+    <div class="war-bar" role="img" aria-label="Humans ${h}, AI ${a}"><div style="width:${h + a ? pct : 50}%"></div></div>`;
+}
+function renderRatingChip() {
+  const el = $('#nav-rating'); if (el) el.textContent = myRating();
+}
+
+// Practice points: every right answer in a level is worth 10, plus up to 10 for beating human par.
+let xp = store.get('xp', 0) || 0;
+function practicePoints(ok, t, par) { return ok ? 10 + Math.max(0, Math.min(10, Math.round((par - t) / par * 10))) : 0; }
+
 // ───────────────── Accounts + global leaderboard (Supabase) ─────────────────
 // Paste your project's URL and anon key (Supabase → Project Settings → API). The anon key is designed to be public;
 // every write goes through checked database functions (supabase/schema.sql). Empty = accounts and leaderboard stay off.
@@ -3468,9 +3671,10 @@ async function onSession(session) {
   const seq = ++sessionSeq;
   if (!session) { me = null; renderAuthChip(); renderLeaderboard(); return; }
   const u = session.user;
-  const {data: prof} = await sb.from('profiles').select('username').eq('id', u.id).maybeSingle();
+  const {data: prof} = await sb.from('profiles').select('username, rating, front').eq('id', u.id).maybeSingle();
   if (seq !== sessionSeq) return;
-  me = {id: u.id, email: u.email, username: prof ? prof.username : null};
+  me = {id: u.id, email: u.email, username: prof ? prof.username : null, rating: prof ? prof.rating : 1000, front: prof ? prof.front : null};
+  battleCache = null; renderRatingChip(); renderStreak(); renderWar();
   renderAuthChip();
   if (!me.username) { openAuth('username'); return; }
   await syncUp();
@@ -3480,7 +3684,7 @@ async function onSession(session) {
 function resumePending() {
   if (!pendingLevel || !(me && me.username)) return;
   const p = pendingLevel; pendingLevel = null; try { sessionStorage.removeItem('yd_pending'); } catch (e) {}
-  closeAuth(); startLevel(p.n, p.t);
+  closeAuth(); if (p.battle) startBattle(); else startLevel(p.n, p.t);
 }
 function renderAuthChip() {
   const b = $('#nav-auth'); if (!b) return;
@@ -3500,24 +3704,28 @@ function openAuth(mode) {
   if (mode === 'username') {
     inner = `<h3 id="auth-h">Pick your leaderboard name</h3>
       <p>This is what everyone sees on the global board. 3–16 letters, numbers or _.</p>
-      <form id="u-form" class="auth-form"><input id="u-name" maxlength="16" autocomplete="nickname" placeholder="e.g. brainlord_99" pattern="[A-Za-z0-9_]{3,16}" required>
-      <button class="btn btn-primary btn-sm" type="submit">Save name</button></form>
+      <form id="u-form" class="auth-form stack"><input id="u-name" maxlength="16" autocomplete="nickname" placeholder="e.g. brainlord_99" pattern="[A-Za-z0-9_]{3,16}" required aria-label="Leaderboard name">
+      <input id="u-front" maxlength="40" autocomplete="off" placeholder="Your front: city or college (optional)" aria-label="City or college">
+      <button class="btn btn-primary btn-sm" type="submit">Join the fight</button></form>
       <p class="auth-msg" id="auth-msg" role="status"></p>`;
   } else if (mode === 'sent') {
     inner = `<h3 id="auth-h">Check your inbox</h3><p>We sent a sign-in link to <strong>${esc(openAuth.email || 'your email')}</strong>. Open it on this device and you're in.</p>
       <button class="btn btn-ghost btn-sm" id="auth-close">Got it</button>`;
   } else if (mode === 'account') {
-    inner = `<h3 id="auth-h">${esc(me.username)}</h3><p>Signed in as ${esc(me.email || '')}. Your stars and daily runs count on the global leaderboard.</p>
+    inner = `<h3 id="auth-h">${esc(me.username)}</h3><p>Rating <strong>${myRating()}</strong> · ${esc(rankOf(myRating()))}. Signed in as ${esc(me.email || '')}.</p>
+      <form id="f-form" class="auth-form"><input id="f-front" maxlength="40" value="${esc(me.front || '')}" placeholder="Your front: city or college" aria-label="City or college"><button class="btn btn-ghost btn-sm" type="submit">Save front</button></form>
+      <p class="auth-msg" id="auth-msg" role="status"></p>
       <div class="auth-row"><button class="btn btn-ghost btn-sm" id="auth-lb">See leaderboard</button><button class="btn btn-ghost btn-sm" id="auth-out">Sign out</button></div>`;
   } else {
-    inner = `<h3 id="auth-h">${gate ? 'ELIZA is done. Save your run.' : 'Sign up free'}</h3>
-      <p>${gate ? 'GPT-2 and every era after it need a free account. ' : ''}Keep your progress on any device and get your name on the global leaderboard.</p>
+    const bat = mode === 'battle';
+    inner = `<h3 id="auth-h">${bat ? 'Sign up to fight' : gate ? 'ELIZA is done. Save your run.' : 'Sign up free'}</h3>
+      <p>${bat ? 'Battles are rated. A free account puts your rating on the global board and your answers on humanity\'s score. ' : gate ? 'GPT-2 and every era after it need a free account. ' : ''}Keep your progress on any device and get your name on the global leaderboard.</p>
       <button class="btn btn-google" id="auth-google">${GOOGLE_G}Continue with Google</button>
       <div class="auth-or"><span>or get a sign-in link</span></div>
       <form id="e-form" class="auth-form"><input id="e-mail" type="email" autocomplete="email" placeholder="you@email.com" required>
       <button class="btn btn-primary btn-sm" type="submit">Email me a link</button></form>
       <p class="auth-msg" id="auth-msg" role="status"></p>
-      ${gate ? '<button class="link-btn" id="auth-later">Not now, back to ELIZA</button>' : '<button class="link-btn" id="auth-later">Maybe later</button>'}`;
+      ${bat ? '<button class="link-btn" id="auth-later">Not now, I\'ll practice</button>' : gate ? '<button class="link-btn" id="auth-later">Not now, back to ELIZA</button>' : '<button class="link-btn" id="auth-later">Maybe later</button>'}`;
   }
   m.innerHTML = `<div class="panel modal-card auth-card">${inner}</div>`;
   document.body.appendChild(m);
@@ -3543,6 +3751,12 @@ function openAuth(mode) {
     const {error} = await sb.auth.signInWithOtp({email, options: {emailRedirectTo: redirectTo}});
     if (error) msg(error.message); else openAuth('sent');
   };
+  const ff = $('#f-form');
+  if (ff) ff.onsubmit = async e => {
+    e.preventDefault(); const v = $('#f-front').value.trim();
+    const {error} = await sb.rpc('set_front', {p_front: v}); if (error) return msg(error.message);
+    me.front = v || null; msg('Saved. You fight for ' + (v || 'nobody in particular') + '.');
+  };
   const uf = $('#u-form');
   if (uf) uf.onsubmit = async e => {
     e.preventDefault();
@@ -3551,7 +3765,8 @@ function openAuth(mode) {
     msg('Saving…');
     const {error} = await sb.from('profiles').insert({id: me.id, username: name});
     if (error) return msg(/duplicate|unique/i.test(error.message) ? 'That name is taken. Try another.' : error.message);
-    me.username = name; logEvent('sign_up', {method: 'supabase'});
+    me.username = name; me.rating = 1000; logEvent('sign_up', {method: 'supabase'});
+    const fr = $('#u-front').value.trim(); if (fr.length >= 2) { await sb.rpc('set_front', {p_front: fr}); me.front = fr; }
     closeAuth(); renderAuthChip(); toast(`Welcome, ${name}`);
     await syncUp(); renderLeaderboard(); resumePending();
   };
@@ -3585,7 +3800,7 @@ async function submitDaily() {
 }
 
 // ── Leaderboard ──
-let lbKind = 'alltime', lbArena = 'logic';
+let lbKind = 'rating', lbArena = 'logic';
 async function renderLeaderboard() {
   if (!ACCOUNTS_ON) return;
   document.querySelectorAll('.lb-tab').forEach(b => { b.setAttribute('aria-selected', b.dataset.k === lbKind); b.onclick = () => { lbKind = b.dataset.k; renderLeaderboard(); }; });
@@ -3598,12 +3813,15 @@ async function renderLeaderboard() {
   const box = $('#lb-body');
   if (!sb) { box.innerHTML = '<ol class="lb-list">' + '<li class="lb-skel"></li>'.repeat(5) + '</ol>'; return; }
   const kind = lbKind, arena = lbArena;
-  const {data, error} = await sb.rpc('get_leaderboard', {p_kind: kind, p_arena: kind === 'arena' ? arena : null, p_day: dayKey()});
+  const {data, error} = await sb.rpc('get_leaderboard2', {p_kind: kind, p_arena: kind === 'arena' ? arena : null, p_day: dayKey()});
   if (kind !== lbKind || arena !== lbArena) return;   // a newer tab was picked meanwhile
   if (error) { box.innerHTML = '<p class="lb-empty">Couldn\'t load the board. Try again in a minute.</p>'; return; }
-  if (!data || !data.length) { box.innerHTML = `<p class="lb-empty">${kind === 'daily' ? 'Nobody has played today\'s run yet.' : 'No one on this board yet.'} Be first.</p>`; return; }
-  const fmtScore = r => kind === 'daily' ? `${r.score}/6 <small>${Number(r.seconds).toFixed(1)}s</small>` : `${r.score} <span class="lb-star" aria-label="stars">★</span>`;
-  box.innerHTML = `<ol class="lb-list">${data.map((r, k) => `<li class="${r.is_me ? 'me' : ''} ${r.rank <= 3 ? 'top' : ''}" style="--i:${k}"><span class="lb-rank">${r.rank}</span><span class="lb-name">${esc(r.username)}${r.is_me ? ' <em>you</em>' : ''}</span><span class="lb-score">${fmtScore(r)}</span></li>`).join('')}</ol>`;
+  if (!data || !data.length) { box.innerHTML = `<p class="lb-empty">${kind === 'battle' ? 'Nobody has fought today\'s battle yet.' : kind === 'fronts' ? 'Fronts appear once two fighters share a city or college.' : 'No one on this board yet.'} Be first.</p>`; return; }
+  const fmtScore = r => kind === 'battle' ? `${r.score}/5 <small>${Number(r.seconds).toFixed(1)}s</small>`
+    : kind === 'rating' ? `${r.score} <small>${esc(rankOf(r.score))}</small>`
+    : kind === 'fronts' ? `${r.score} <small>${esc(r.extra || '')}</small>`
+    : `${r.score} <span class="lb-star" aria-label="stars">★</span>`;
+  box.innerHTML = `<ol class="lb-list">${data.map((r, k) => `<li class="${r.is_me ? 'me' : ''} ${r.rank <= 3 ? 'top' : ''}" style="--i:${k}"><span class="lb-rank">${r.rank}</span><span class="lb-name">${esc(r.username)}${r.is_me ? ` <em>${kind === 'fronts' ? 'yours' : 'you'}</em>` : ''}${kind !== 'fronts' && r.extra ? `<small class="lb-front">${esc(r.extra)}</small>` : ''}</span><span class="lb-score">${fmtScore(r)}</span></li>`).join('')}</ol>`;
 }
 
 // ───────────────── Save codes: move progress between devices without an account ─────────────────
